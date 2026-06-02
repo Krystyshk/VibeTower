@@ -1,6 +1,7 @@
 package vibetower.ui;
 
 import vibetower.model.GameState;
+import vibetower.model.HomeFrame;
 import vibetower.model.Item;
 import vibetower.model.SaveManager;
 

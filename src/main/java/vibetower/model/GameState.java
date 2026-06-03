@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 public class GameState implements Serializable {
     private int level;
+    private long cafeCooldownEndTime = 0;
     private int xp;
     private int silver;
     private int gold;
@@ -17,7 +18,7 @@ public class GameState implements Serializable {
     private ArrayList<String> completedTasks;
 
     public GameState() {
-        this.level = 1;
+        this.level = 2;
         this.xp = 0;
         this.silver = 500;
         this.gold = 20;
@@ -207,5 +208,13 @@ public class GameState implements Serializable {
             default:
                 return "Невідомий рівень";
         }
+    }
+
+    public long getCafeCooldownEndTime() {
+        return cafeCooldownEndTime;
+    }
+
+    public void setCafeCooldownEndTime(long timeMillis) {
+        this.cafeCooldownEndTime = timeMillis;
     }
 }

@@ -35,15 +35,19 @@ public class HomeFrame extends JFrame {
 
         JPanel centerPanel = new JPanel();
         centerPanel.setOpaque(false);
+
+        // 3 ряда по 3 места, потому что теперь есть кнопка "Карта"
         centerPanel.setLayout(new GridLayout(3, 3, 35, 25));
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(60, 80, 80, 80));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(55, 80, 75, 80));
 
         ImageButton apartmentButton = new ImageButton("/квартира.png");
         ImageButton tasksButton = new ImageButton("/завдання.png");
         ImageButton inventoryButton = new ImageButton("/інвентар.png");
+
         ImageButton mapButton = new ImageButton("/карта.png");
         ImageButton repairButton = new ImageButton("/режим ремонту.png");
         ImageButton shopButton = new ImageButton("/магазин інтер.png");
+
         ImageButton saveButton = new ImageButton("/зберегти прогрес.png");
 
         apartmentButton.addActionListener(e -> {
@@ -62,12 +66,8 @@ public class HomeFrame extends JFrame {
         });
 
         mapButton.addActionListener(e -> {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Карта міста буде додана наступним етапом.",
-                    "Карта",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+            MapFrame mapFrame = new MapFrame(gameState);
+            mapFrame.setVisible(true);
         });
 
         repairButton.addActionListener(e -> {
@@ -99,9 +99,9 @@ public class HomeFrame extends JFrame {
         centerPanel.add(createButtonCell(repairButton));
         centerPanel.add(createButtonCell(shopButton));
 
-        centerPanel.add(new JPanel());
+        centerPanel.add(createEmptyCell());
         centerPanel.add(createButtonCell(saveButton));
-        centerPanel.add(new JPanel());
+        centerPanel.add(createEmptyCell());
 
         backgroundPanel.add(centerPanel, BorderLayout.CENTER);
         add(backgroundPanel, BorderLayout.CENTER);
@@ -116,6 +116,12 @@ public class HomeFrame extends JFrame {
         cell.setOpaque(false);
         cell.setLayout(new GridBagLayout());
         cell.add(button);
+        return cell;
+    }
+
+    private JPanel createEmptyCell() {
+        JPanel cell = new JPanel();
+        cell.setOpaque(false);
         return cell;
     }
 }

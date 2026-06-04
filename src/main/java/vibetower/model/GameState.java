@@ -5,6 +5,8 @@ import java.util.ArrayList;
 
 public class GameState implements Serializable {
 
+    private static final long serialVersionUID = 1L; // Фіксуємо версію для сумісності збережень
+
     private int silver;
     private int gold;
     private int level;
@@ -19,7 +21,7 @@ public class GameState implements Serializable {
     public GameState() {
         silver = 500;
         gold = 20;
-        level = 1;
+        level = 5;
         experience = 0;
         energy = 100;
 
@@ -119,4 +121,39 @@ public class GameState implements Serializable {
     public void restoreEnergy() {
         energy = 100;
     }
+
+    // Витратити срібло. Повертає true, якщо вистачало.
+    public boolean spendSilver(int amount) {
+        if (silver >= amount) {
+            silver -= amount;
+            return true;
+        }
+        return false;
+    }
+
+    // Витратити золото. Повертає true, якщо вистачало.
+    public boolean spendGold(int amount) {
+        if (gold >= amount) {
+            gold -= amount;
+            return true;
+        }
+        return false;
+    }
+
+    // Відновити енергію (не вище 100).
+    public void addEnergy(int amount) {
+        energy = Math.min(100, energy + amount);
+    }
+
+    // Додаткові поля для стану локацій
+    private boolean janitorWorkDone = false;
+    private boolean npcQuestDone    = false;
+    private boolean cottonCandyDone = false;
+
+    public boolean isJanitorWorkDone()  { return janitorWorkDone; }
+    public void    setJanitorWorkDone() { this.janitorWorkDone = true; }
+    public boolean isNpcQuestDone()     { return npcQuestDone; }
+    public void    setNpcQuestDone()    { this.npcQuestDone = true; }
+    public boolean isCottonCandyDone()  { return cottonCandyDone; }
+    public void    setCottonCandyDone() { this.cottonCandyDone = true; }
 }

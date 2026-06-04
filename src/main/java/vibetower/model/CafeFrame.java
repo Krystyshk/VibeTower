@@ -244,6 +244,7 @@ public class CafeFrame extends JFrame {
                 }
 
                 updateStats();
+                SaveManager.saveGame(gameState); // Bug fix: зберігаємо після кожного замовлення
 
                 if (activeOrdersRemaining == 0) {
                     finishShiftButton.setVisible(true);
@@ -260,6 +261,7 @@ public class CafeFrame extends JFrame {
     private void completeShift() {
         gameState.addSilver(50);
         gameState.addXp(50);
+        SaveManager.saveGame(gameState); // Bug fix: зберігаємо бонус зміни
 
         long endTime = System.currentTimeMillis() + (COOLDOWN_TIME_SECS * 1000L);
         gameState.setCafeCooldownEndTime(endTime);

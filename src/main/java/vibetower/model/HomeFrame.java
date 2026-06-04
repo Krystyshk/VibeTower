@@ -30,19 +30,24 @@ public class HomeFrame extends JFrame {
         JLabel titleLabel = new JLabel("Меню квартири", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 42));
         titleLabel.setForeground(new Color(72, 37, 120));
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(45, 0, 20, 0));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(35, 0, 15, 0));
         backgroundPanel.add(titleLabel, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel();
         centerPanel.setOpaque(false);
-        centerPanel.setLayout(new GridLayout(2, 3, 45, 45));
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(110, 80, 130, 80));
+
+        // 3 ряда по 3 места, потому что теперь есть кнопка "Карта"
+        centerPanel.setLayout(new GridLayout(3, 3, 35, 25));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(55, 80, 75, 80));
 
         ImageButton apartmentButton = new ImageButton("/квартира.png");
         ImageButton tasksButton = new ImageButton("/завдання.png");
         ImageButton inventoryButton = new ImageButton("/інвентар.png");
+
+        ImageButton mapButton = new ImageButton("/карта.png");
         ImageButton repairButton = new ImageButton("/режим ремонту.png");
         ImageButton shopButton = new ImageButton("/магазин інтер.png");
+
         ImageButton saveButton = new ImageButton("/зберегти прогрес.png");
 
         apartmentButton.addActionListener(e -> {
@@ -58,6 +63,11 @@ public class HomeFrame extends JFrame {
         inventoryButton.addActionListener(e -> {
             InventoryFrame inventoryFrame = new InventoryFrame(gameState);
             inventoryFrame.setVisible(true);
+        });
+
+        mapButton.addActionListener(e -> {
+            MapFrame mapFrame = new MapFrame(gameState);
+            mapFrame.setVisible(true);
         });
 
         repairButton.addActionListener(e -> {
@@ -85,9 +95,13 @@ public class HomeFrame extends JFrame {
         centerPanel.add(createButtonCell(tasksButton));
         centerPanel.add(createButtonCell(inventoryButton));
 
+        centerPanel.add(createButtonCell(mapButton));
         centerPanel.add(createButtonCell(repairButton));
         centerPanel.add(createButtonCell(shopButton));
+
+        centerPanel.add(createEmptyCell());
         centerPanel.add(createButtonCell(saveButton));
+        centerPanel.add(createEmptyCell());
 
         backgroundPanel.add(centerPanel, BorderLayout.CENTER);
         add(backgroundPanel, BorderLayout.CENTER);
@@ -102,6 +116,12 @@ public class HomeFrame extends JFrame {
         cell.setOpaque(false);
         cell.setLayout(new GridBagLayout());
         cell.add(button);
+        return cell;
+    }
+
+    private JPanel createEmptyCell() {
+        JPanel cell = new JPanel();
+        cell.setOpaque(false);
         return cell;
     }
 }

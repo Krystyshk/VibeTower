@@ -1,6 +1,8 @@
 package vibetower.ui;
 
 import vibetower.model.GameState;
+import vibetower.model.HomeFrame;
+import vibetower.model.SaveManager;
 
 public class LoginFrame extends StartFrame {
 

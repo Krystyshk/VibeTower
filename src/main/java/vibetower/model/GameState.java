@@ -21,7 +21,7 @@ public class GameState implements Serializable {
     public GameState() {
         silver = 500;
         gold = 20;
-        level = 2;
+        level = 5;
         experience = 0;
         energy = 100;
 

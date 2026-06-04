@@ -1,158 +1,111 @@
 package vibetower.ui;
 
 import vibetower.model.GameState;
-import vibetower.model.HomeFrame;
-import vibetower.model.SaveManager;
+import vibetower.model.Item;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
+import java.util.ArrayList;
 
 public class ApartmentFrame extends JFrame {
+
     private GameState gameState;
-    private JLabel apartmentLabel;
 
     public ApartmentFrame(GameState gameState) {
         this.gameState = gameState;
 
         setTitle("VibeTower — Квартира");
-        setSize(800, 550);
+        setSize(1000, 700);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        JPanel topPanel = createTopPanel();
-        add(topPanel, BorderLayout.NORTH);
+        JPanel mainPanel = new JPanel();
+        mainPanel.setBackground(Color.WHITE);
+        mainPanel.setLayout(new BorderLayout());
 
-        JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new BorderLayout());
-        centerPanel.setBackground(new Color(245, 235, 220));
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        JPanel topPanel = new JPanel();
+        topPanel.setOpaque(false);
+        topPanel.setLayout(new BorderLayout());
+        topPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 10, 30));
 
-        apartmentLabel = new JLabel("", SwingConstants.CENTER);
-        apartmentLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        JLabel titleLabel = new JLabel("Квартира персонажа", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 36));
+        titleLabel.setForeground(new Color(72, 37, 120));
 
-        updateApartmentText();
+        topPanel.add(titleLabel, BorderLayout.CENTER);
+        topPanel.add(new CurrencyPanel(gameState), BorderLayout.EAST);
 
-        centerPanel.add(apartmentLabel, BorderLayout.CENTER);
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(new RoomPanel(gameState), BorderLayout.CENTER);
 
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(2, 3, 10, 10));
-
-        JButton chooseApartmentButton = new JButton("Обрати квартиру");
-        JButton restButton = new JButton("Відпочити");
-        JButton shopButton = new JButton("Магазин");
-        JButton repairButton = new JButton("Ремонт");
-        JButton inventoryButton = new JButton("Інвентар");
-        JButton backButton = new JButton("До меню");
-
-        buttonPanel.add(chooseApartmentButton);
-        buttonPanel.add(restButton);
-        buttonPanel.add(shopButton);
-        buttonPanel.add(repairButton);
-        buttonPanel.add(inventoryButton);
-        buttonPanel.add(backButton);
-
-        add(centerPanel, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
-
-        chooseApartmentButton.addActionListener(e -> chooseApartment());
-
-        restButton.addActionListener(e -> {
-            gameState.restoreEnergy();
-            JOptionPane.showMessageDialog(this, "Персонаж відпочив. Енергія відновлена!");
-            refreshWindow();
-        });
-
-        shopButton.addActionListener(e -> {
-            new ShopFrame(gameState).setVisible(true);
-            dispose();
-        });
-
-        repairButton.addActionListener(e -> {
-            new RepairFrame(gameState).setVisible(true);
-            dispose();
-        });
-
-        inventoryButton.addActionListener(e -> {
-            new InventoryFrame(gameState).setVisible(true);
-            dispose();
-        });
-
-        backButton.addActionListener(e -> {
-            new HomeFrame(gameState).setVisible(true);
-            dispose();
-        });
+        add(mainPanel, BorderLayout.CENTER);
     }
 
-    private JPanel createTopPanel() {
-        JPanel panel = new JPanel();
-        panel.setBackground(new Color(45, 62, 90));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JLabel label = new JLabel(
-                "Рівень: " + gameState.getLevel()
-                        + " | XP: " + gameState.getXp()
-                        + " | Срібло: " + gameState.getSilver()
-                        + " | Золото: " + gameState.getGold()
-                        + " | Енергія: " + gameState.getEnergy()
-        );
-
-        label.setForeground(Color.WHITE);
-        label.setFont(new Font("Arial", Font.BOLD, 14));
-        panel.add(label);
-
-        return panel;
+    public ApartmentFrame() {
+        this(new GameState());
     }
 
-    private void chooseApartment() {
-        String[] apartments = {
-                "Світла квартира",
-                "Затишна бежева квартира",
-                "Сучасна темна квартира"
-        };
+    private static class RoomPanel extends JPanel {
 
-        String selected = (String) JOptionPane.showInputDialog(
-                this,
-                "Оберіть стартову квартиру:",
-                "Вибір квартири",
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                apartments,
-                apartments[0]
-        );
+        private GameState gameState;
+        private Image roomImage;
 
-        if (selected != null) {
-            gameState.setApartment(selected);
-            SaveManager.saveGame(gameState);
-            JOptionPane.showMessageDialog(this, "Ви обрали: " + selected);
-            refreshWindow();
-        }
-    }
+        public RoomPanel(GameState gameState) {
+            this.gameState = gameState;
+            setBackground(Color.WHITE);
 
-    private void updateApartmentText() {
-        if (gameState.getApartment() == null) {
-            apartmentLabel.setText("<html><center>У вас ще немає квартири.<br>Оберіть стартову квартиру.</center></html>");
-        } else {
-            StringBuilder text = new StringBuilder();
-            text.append("<html><center>");
-            text.append("Ваша квартира: ").append(gameState.getApartment()).append("<br><br>");
-            text.append("Розміщені меблі:<br>");
-
-            if (gameState.getPlacedFurniture().isEmpty()) {
-                text.append("Поки що меблів немає.");
+            URL roomUrl = getClass().getResource("/komnata.jpg");
+            if (roomUrl != null) {
+                ImageIcon roomIcon = new ImageIcon(roomUrl);
+                roomImage = roomIcon.getImage();
             } else {
-                for (String item : gameState.getPlacedFurniture()) {
-                    text.append("• ").append(item).append("<br>");
-                }
+                System.out.println("Картинку кімнати не знайдено");
+            }
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            if (roomImage != null) {
+                g.drawImage(roomImage, 70, 20, 850, 500, this);
+            } else {
+                g.setFont(new Font("Arial", Font.BOLD, 24));
+                g.setColor(Color.RED);
+                g.drawString("Картинку кімнати не знайдено", 300, 250);
             }
 
-            text.append("</center></html>");
-            apartmentLabel.setText(text.toString());
+            drawPlacedItems(g);
         }
-    }
 
-    private void refreshWindow() {
-        new ApartmentFrame(gameState).setVisible(true);
-        dispose();
+        private void drawPlacedItems(Graphics g) {
+            ArrayList<Item> placedItems = gameState.getPlacedItems();
+            g.setFont(new Font("Arial", Font.BOLD, 42));
+            g.setColor(new Color(72, 37, 120));
+
+            int x = 180;
+            int y = 420;
+
+            for (Item item : placedItems) {
+                g.drawString(getItemIcon(item.getName()), x, y);
+                x += 90;
+                if (x > 760) {
+                    x = 180;
+                    y -= 80;
+                }
+            }
+        }
+
+        private String getItemIcon(String name) {
+            if (name.equals("Диван")) return "🛋";
+            if (name.equals("Ліжко")) return "🛏";
+            if (name.equals("Стіл")) return "▤";
+            if (name.equals("Килим")) return "▭";
+            if (name.equals("Лампа")) return "💡";
+            if (name.equals("Картина")) return "▧";
+            return "▣";
+        }
     }
 }

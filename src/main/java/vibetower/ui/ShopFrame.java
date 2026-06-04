@@ -1,223 +1,137 @@
 package vibetower.ui;
 
 import vibetower.model.GameState;
-import vibetower.model.HomeFrame;
 import vibetower.model.Item;
-import vibetower.model.SaveManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 
 public class ShopFrame extends JFrame {
+
     private GameState gameState;
-    private JPanel itemsPanel;
-    private JLabel infoLabel;
-    private ArrayList<Item> shopItems;
+    private JPanel topPanel;
 
     public ShopFrame(GameState gameState) {
         this.gameState = gameState;
-        this.shopItems = createShopItems();
 
         setTitle("VibeTower — Магазин інтер'єру");
-        setSize(850, 600);
+        setSize(950, 680);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        add(createTopPanel(), BorderLayout.NORTH);
+        JPanel mainPanel = new JPanel();
+        mainPanel.setBackground(Color.WHITE);
+        mainPanel.setLayout(new BorderLayout());
 
-        itemsPanel = new JPanel();
-        itemsPanel.setLayout(new GridLayout(0, 2, 15, 15));
-        itemsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        itemsPanel.setBackground(new Color(238, 241, 245));
+        topPanel = new JPanel();
+        topPanel.setOpaque(false);
+        topPanel.setLayout(new BorderLayout());
+        topPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 10, 30));
 
-        JScrollPane scrollPane = new JScrollPane(itemsPanel);
-        add(scrollPane, BorderLayout.CENTER);
+        JLabel titleLabel = new JLabel("Магазин інтер'єру", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 36));
+        titleLabel.setForeground(new Color(72, 37, 120));
 
-        add(createBottomPanel(), BorderLayout.SOUTH);
+        topPanel.add(titleLabel, BorderLayout.CENTER);
+        topPanel.add(new CurrencyPanel(gameState), BorderLayout.EAST);
+        mainPanel.add(topPanel, BorderLayout.NORTH);
 
-        showItems("Усі");
+        JPanel shopPanel = new JPanel();
+        shopPanel.setOpaque(false);
+        shopPanel.setLayout(new GridLayout(2, 3, 20, 20));
+        shopPanel.setBorder(BorderFactory.createEmptyBorder(30, 70, 70, 70));
+
+        shopPanel.add(createShopCard("Диван", 250));
+        shopPanel.add(createShopCard("Ліжко", 300));
+        shopPanel.add(createShopCard("Стіл", 150));
+        shopPanel.add(createShopCard("Килим", 120));
+        shopPanel.add(createShopCard("Лампа", 90));
+        shopPanel.add(createShopCard("Картина", 180));
+
+        mainPanel.add(shopPanel, BorderLayout.CENTER);
+        add(mainPanel, BorderLayout.CENTER);
     }
 
-    private JPanel createTopPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(45, 62, 90));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        infoLabel = new JLabel(
-                "Рівень: " + gameState.getLevel()
-                        + " | Срібло: " + gameState.getSilver()
-                        + " | Золото: " + gameState.getGold()
-        );
-
-        infoLabel.setForeground(Color.WHITE);
-        infoLabel.setFont(new Font("Arial", Font.BOLD, 14));
-
-        JLabel title = new JLabel("Магазин інтер'єру");
-        title.setForeground(Color.WHITE);
-        title.setFont(new Font("Arial", Font.BOLD, 22));
-
-        panel.add(title, BorderLayout.WEST);
-        panel.add(infoLabel, BorderLayout.EAST);
-
-        return panel;
+    public ShopFrame() {
+        this(new GameState());
     }
 
-    private JPanel createBottomPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(2, 4, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JButton allButton = new JButton("Усі");
-        JButton wallButton = new JButton("Шпалери");
-        JButton floorButton = new JButton("Підлога");
-        JButton furnitureButton = new JButton("Меблі");
-        JButton decorButton = new JButton("Декор");
-        JButton techButton = new JButton("Техніка");
-        JButton premiumButton = new JButton("Преміум");
-        JButton backButton = new JButton("До меню");
-
-        panel.add(allButton);
-        panel.add(wallButton);
-        panel.add(floorButton);
-        panel.add(furnitureButton);
-        panel.add(decorButton);
-        panel.add(techButton);
-        panel.add(premiumButton);
-        panel.add(backButton);
-
-        allButton.addActionListener(e -> showItems("Усі"));
-        wallButton.addActionListener(e -> showItems("Шпалери"));
-        floorButton.addActionListener(e -> showItems("Підлога"));
-        furnitureButton.addActionListener(e -> showItems("Меблі"));
-        decorButton.addActionListener(e -> showItems("Декор"));
-        techButton.addActionListener(e -> showItems("Техніка"));
-        premiumButton.addActionListener(e -> showItems("Преміум"));
-
-        backButton.addActionListener(e -> {
-            new HomeFrame(gameState).setVisible(true);
-            dispose();
-        });
-
-        return panel;
-    }
-
-    private void showItems(String category) {
-        itemsPanel.removeAll();
-
-        for (Item item : shopItems) {
-            if (category.equals("Усі") || item.getCategory().equals(category)) {
-                itemsPanel.add(createItemCard(item));
-            }
-        }
-
-        itemsPanel.revalidate();
-        itemsPanel.repaint();
-    }
-
-    private JPanel createItemCard(Item item) {
+    private JPanel createShopCard(String itemName, int price) {
         JPanel card = new JPanel();
+        card.setBackground(new Color(250, 250, 250));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(120, 82, 160), 3),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
         card.setLayout(new BorderLayout());
-        card.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180), 1));
-        card.setBackground(Color.WHITE);
 
-        JLabel nameLabel = new JLabel(
-                "<html><center>"
-                        + "<span style='font-size:28px;'>" + item.getIcon() + "</span><br>"
-                        + "<b>" + item.getName() + "</b><br>"
-                        + "Категорія: " + item.getCategory() + "<br>"
-                        + "Ціна: " + item.getPrice() + " " + translateCurrency(item.getCurrency()) + "<br>"
-                        + "Доступно з рівня: " + item.getMinLevel()
-                        + "</center></html>",
-                SwingConstants.CENTER
-        );
+        JLabel itemIcon = new JLabel(getItemIcon(itemName), SwingConstants.CENTER);
+        itemIcon.setFont(new Font("Arial", Font.BOLD, 48));
+        itemIcon.setForeground(new Color(120, 82, 160));
+
+        JLabel nameLabel = new JLabel(itemName, SwingConstants.CENTER);
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 21));
+        nameLabel.setForeground(new Color(72, 37, 120));
+
+        JLabel priceLabel = new JLabel(price + " срібла", SwingConstants.CENTER);
+        priceLabel.setFont(new Font("Arial", Font.BOLD, 17));
+        priceLabel.setForeground(new Color(150, 90, 20));
 
         JButton buyButton = new JButton("Купити");
+        buyButton.setFont(new Font("Arial", Font.BOLD, 17));
+        buyButton.setBackground(new Color(255, 218, 130));
+        buyButton.setForeground(new Color(72, 37, 120));
+        buyButton.setFocusPainted(false);
 
-        buyButton.addActionListener(e -> buyItem(item));
+        buyButton.addActionListener(e -> {
+            Item item = new Item(itemName, price);
+            boolean bought = gameState.buyItem(item);
 
-        card.add(nameLabel, BorderLayout.CENTER);
+            if (bought) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        itemName + " додано в інвентар!",
+                        "Покупка",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+                refreshCurrency();
+            } else {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Недостатньо срібла для покупки!",
+                        "Помилка",
+                        JOptionPane.WARNING_MESSAGE
+                );
+            }
+        });
+
+        JPanel textPanel = new JPanel();
+        textPanel.setOpaque(false);
+        textPanel.setLayout(new GridLayout(2, 1));
+        textPanel.add(nameLabel);
+        textPanel.add(priceLabel);
+
+        card.add(textPanel, BorderLayout.NORTH);
+        card.add(itemIcon, BorderLayout.CENTER);
         card.add(buyButton, BorderLayout.SOUTH);
-
         return card;
     }
 
-    private void buyItem(Item item) {
-        if (gameState.getLevel() < item.getMinLevel()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Цей предмет доступний з " + item.getMinLevel() + " рівня."
-            );
-            return;
-        }
-
-        boolean success;
-
-        if (item.getCurrency().equals("silver")) {
-            success = gameState.spendSilver(item.getPrice());
-        } else {
-            success = gameState.spendGold(item.getPrice());
-        }
-
-        if (success) {
-            gameState.addItemToInventory(item.getFullName());
-            SaveManager.saveGame(gameState);
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Покупка успішна! Предмет додано в інвентар."
-            );
-
-            refreshWindow();
-        } else {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Недостатньо валюти для покупки."
-            );
-        }
+    private void refreshCurrency() {
+        topPanel.remove(1);
+        topPanel.add(new CurrencyPanel(gameState), BorderLayout.EAST);
+        topPanel.revalidate();
+        topPanel.repaint();
     }
 
-    private String translateCurrency(String currency) {
-        if (currency.equals("silver")) {
-            return "срібла";
-        }
-        return "золота";
-    }
-
-    private void refreshWindow() {
-        new ShopFrame(gameState).setVisible(true);
-        dispose();
-    }
-
-    private ArrayList<Item> createShopItems() {
-        ArrayList<Item> items = new ArrayList<>();
-
-        items.add(new Item("Бежеві шпалери", "Шпалери", 80, "silver", 1, "🧱"));
-        items.add(new Item("Рожеві шпалери", "Шпалери", 120, "silver", 2, "🌸"));
-        items.add(new Item("Преміальні шпалери", "Преміум", 8, "gold", 5, "✨"));
-
-        items.add(new Item("Дерев'яна підлога", "Підлога", 100, "silver", 1, "🟫"));
-        items.add(new Item("Світла підлога", "Підлога", 140, "silver", 3, "⬜"));
-        items.add(new Item("Преміальна підлога", "Преміум", 10, "gold", 6, "💎"));
-
-        items.add(new Item("Ліжко", "Меблі", 180, "silver", 2, "🛏️"));
-        items.add(new Item("Шафа", "Меблі", 160, "silver", 2, "🚪"));
-        items.add(new Item("Стіл", "Меблі", 100, "silver", 1, "🪑"));
-        items.add(new Item("Диван", "Меблі", 250, "silver", 4, "🛋️"));
-        items.add(new Item("Кухонний стіл", "Меблі", 200, "silver", 7, "🍽️"));
-
-        items.add(new Item("Картина", "Декор", 70, "silver", 1, "🖼️"));
-        items.add(new Item("Рослина", "Декор", 90, "silver", 2, "🪴"));
-        items.add(new Item("Килим", "Декор", 130, "silver", 3, "🧶"));
-
-        items.add(new Item("Телевізор", "Техніка", 300, "silver", 4, "📺"));
-        items.add(new Item("Комп'ютер", "Техніка", 12, "gold", 6, "💻"));
-        items.add(new Item("Холодильник", "Техніка", 350, "silver", 7, "🧊"));
-
-        items.add(new Item("Преміальна статуетка", "Преміум", 15, "gold", 8, "🏆"));
-        items.add(new Item("Рідкісний декор", "Преміум", 20, "gold", 9, "👑"));
-
-        return items;
+    private String getItemIcon(String name) {
+        if (name.equals("Диван")) return "🛋";
+        if (name.equals("Ліжко")) return "🛏";
+        if (name.equals("Стіл")) return "▤";
+        if (name.equals("Килим")) return "▭";
+        if (name.equals("Лампа")) return "💡";
+        if (name.equals("Картина")) return "▧";
+        return "▣";
     }
 }

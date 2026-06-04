@@ -1,21 +1,19 @@
 package vibetower.model;
+
 import java.io.Serializable;
 
 public class Task implements Serializable {
+
     private String name;
     private String description;
-    private int minLevel;
-    private int xpReward;
     private int silverReward;
-    private int goldReward;
+    private int experienceReward;
 
-    public Task(String name, String description, int minLevel, int xpReward, int silverReward, int goldReward) {
+    public Task(String name, String description, int silverReward, int experienceReward) {
         this.name = name;
         this.description = description;
-        this.minLevel = minLevel;
-        this.xpReward = xpReward;
         this.silverReward = silverReward;
-        this.goldReward = goldReward;
+        this.experienceReward = experienceReward;
     }
 
     public String getName() {
@@ -26,19 +24,11 @@ public class Task implements Serializable {
         return description;
     }
 
-    public int getMinLevel() {
-        return minLevel;
-    }
-
-    public int getXpReward() {
-        return xpReward;
-    }
-
     public int getSilverReward() {
         return silverReward;
     }
 
-    public int getGoldReward() {
-        return goldReward;
+    public int getExperienceReward() {
+        return experienceReward;
     }
 }

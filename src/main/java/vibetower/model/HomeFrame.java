@@ -1,113 +1,86 @@
 package vibetower.model;
 
-import vibetower.ui.*;
+import vibetower.ui.ApartmentFrame;
+import vibetower.ui.ImageButton;
+import vibetower.ui.InventoryFrame;
+import vibetower.ui.RepairFrame;
+import vibetower.ui.ShopFrame;
+import vibetower.ui.TasksFrame;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class HomeFrame extends JFrame {
+
     private GameState gameState;
-    private JLabel infoLabel;
 
     public HomeFrame(GameState gameState) {
         this.gameState = gameState;
 
         setTitle("VibeTower — Головне меню");
-        setSize(700, 500);
+        setSize(1100, 750);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        JPanel topPanel = new JPanel();
-        topPanel.setBackground(new Color(45, 62, 90));
-        topPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        JPanel backgroundPanel = new JPanel();
+        backgroundPanel.setBackground(Color.WHITE);
+        backgroundPanel.setLayout(new BorderLayout());
 
-        JLabel titleLabel = new JLabel("VibeTower");
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 28));
-
-        topPanel.add(titleLabel);
-        add(topPanel, BorderLayout.NORTH);
+        JLabel titleLabel = new JLabel("Меню квартири", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 42));
+        titleLabel.setForeground(new Color(72, 37, 120));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(45, 0, 20, 0));
+        backgroundPanel.add(titleLabel, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new GridLayout(7, 1, 10, 10));
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(30, 150, 30, 150));
-        centerPanel.setBackground(new Color(238, 241, 245));
+        centerPanel.setOpaque(false);
+        centerPanel.setLayout(new GridLayout(2, 3, 45, 45));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(110, 80, 130, 80));
 
-        infoLabel = new JLabel("", SwingConstants.CENTER);
-        infoLabel.setFont(new Font("Arial", Font.BOLD, 15));
-        updateInfoLabel();
+        ImageButton apartmentButton = new ImageButton("/квартира.png");
+        ImageButton tasksButton = new ImageButton("/завдання.png");
+        ImageButton inventoryButton = new ImageButton("/інвентар.png");
+        ImageButton repairButton = new ImageButton("/режим ремонту.png");
+        ImageButton shopButton = new ImageButton("/магазин інтер.png");
+        ImageButton saveButton = new ImageButton("/зберегти прогрес.png");
 
-        JButton apartmentButton = new JButton("Квартира");
-        JButton shopButton = new JButton("Магазин інтер'єру");
-        JButton inventoryButton = new JButton("Інвентар");
-        JButton repairButton = new JButton("Режим ремонту");
-        JButton tasksButton = new JButton("Завдання");
-        JButton saveButton = new JButton("Зберегти прогрес");
-        JButton mapButton = new JButton("Карта міста");
-        mapButton.setBackground(new Color(40, 42, 45));
-        mapButton.setForeground(Color.WHITE);
-
-        centerPanel.add(infoLabel);
-        centerPanel.add(apartmentButton);
-        centerPanel.add(shopButton);
-        centerPanel.add(inventoryButton);
-        centerPanel.add(repairButton);
-        centerPanel.add(tasksButton);
-        centerPanel.add(saveButton);
-        centerPanel.add(mapButton);
-
-        add(centerPanel, BorderLayout.CENTER);
-
-        apartmentButton.addActionListener(e -> {
-            ApartmentFrame apartmentFrame = new ApartmentFrame(gameState);
-            apartmentFrame.setVisible(true);
-            dispose();
-        });
-
-        shopButton.addActionListener(e -> {
-            ShopFrame shopFrame = new ShopFrame(gameState);
-            shopFrame.setVisible(true);
-            dispose();
-        });
-
-        inventoryButton.addActionListener(e -> {
-            InventoryFrame inventoryFrame = new InventoryFrame(gameState);
-            inventoryFrame.setVisible(true);
-            dispose();
-        });
-
-        repairButton.addActionListener(e -> {
-            RepairFrame repairFrame = new RepairFrame(gameState);
-            repairFrame.setVisible(true);
-            dispose();
-        });
-
-        tasksButton.addActionListener(e -> {
-            TasksFrame tasksFrame = new TasksFrame(gameState);
-            tasksFrame.setVisible(true);
-            dispose();
-        });
+        apartmentButton.addActionListener(e -> new ApartmentFrame(gameState).setVisible(true));
+        tasksButton.addActionListener(e -> new TasksFrame(gameState).setVisible(true));
+        inventoryButton.addActionListener(e -> new InventoryFrame(gameState).setVisible(true));
+        repairButton.addActionListener(e -> new RepairFrame(gameState).setVisible(true));
+        shopButton.addActionListener(e -> new ShopFrame(gameState).setVisible(true));
 
         saveButton.addActionListener(e -> {
             SaveManager.saveGame(gameState);
-            JOptionPane.showMessageDialog(this, "Прогрес гри збережено!");
-            updateInfoLabel();
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Прогрес збережено!",
+                    "Збереження",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
         });
 
-        mapButton.addActionListener(e -> {
-            new MapFrame(gameState).setVisible(true);
-            dispose();
-        });
+        centerPanel.add(createButtonCell(apartmentButton));
+        centerPanel.add(createButtonCell(tasksButton));
+        centerPanel.add(createButtonCell(inventoryButton));
+        centerPanel.add(createButtonCell(repairButton));
+        centerPanel.add(createButtonCell(shopButton));
+        centerPanel.add(createButtonCell(saveButton));
+
+        backgroundPanel.add(centerPanel, BorderLayout.CENTER);
+        add(backgroundPanel, BorderLayout.CENTER);
     }
 
-    private void updateInfoLabel() {
-        infoLabel.setText(
-                "Рівень: " + gameState.getLevel()
-                        + " | XP: " + gameState.getXp()
-                        + " | Срібло: " + gameState.getSilver()
-                        + " | Золото: " + gameState.getGold()
-                        + " | Енергія: " + gameState.getEnergy()
-        );
+    public HomeFrame() {
+        this(new GameState());
+    }
+
+    private JPanel createButtonCell(ImageButton button) {
+        JPanel cell = new JPanel();
+        cell.setOpaque(false);
+        cell.setLayout(new GridBagLayout());
+        cell.add(button);
+        return cell;
     }
 }

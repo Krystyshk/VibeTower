@@ -1,5 +1,7 @@
-target/
+.idea/
 out/
-.DS_Store
-sources.txt
+target/
+*.iml
 *.class
+.DS_Store
+vibetower_save.dat

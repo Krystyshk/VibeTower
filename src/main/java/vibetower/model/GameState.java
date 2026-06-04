@@ -9,14 +9,24 @@ public class GameState implements Serializable {
     private int gold;
     private int level;
     private int experience;
+    private int energy;
+
+    private long cafeCooldownEndTime;
+
     private ArrayList<Item> inventory;
+    private ArrayList<Item> placedItems;
 
     public GameState() {
         silver = 500;
         gold = 20;
         level = 1;
         experience = 0;
+        energy = 100;
+
+        cafeCooldownEndTime = 0;
+
         inventory = new ArrayList<>();
+        placedItems = new ArrayList<>();
     }
 
     public int getSilver() {
@@ -35,13 +45,33 @@ public class GameState implements Serializable {
         return experience;
     }
 
+    public int getXp() {
+        return experience;
+    }
+
+    public int getEnergy() {
+        return energy;
+    }
+
     public ArrayList<Item> getInventory() {
         return inventory;
     }
 
+    public ArrayList<Item> getPlacedItems() {
+        return placedItems;
+    }
+
+    public long getCafeCooldownEndTime() {
+        return cafeCooldownEndTime;
+    }
+
+    public void setCafeCooldownEndTime(long cafeCooldownEndTime) {
+        this.cafeCooldownEndTime = cafeCooldownEndTime;
+    }
+
     public boolean buyItem(Item item) {
         if (silver >= item.getPrice()) {
-            silver = silver - item.getPrice();
+            silver -= item.getPrice();
             inventory.add(item);
             addExperience(10);
             return true;
@@ -50,22 +80,43 @@ public class GameState implements Serializable {
         return false;
     }
 
+    public void placeItem(Item item) {
+        if (!placedItems.contains(item)) {
+            placedItems.add(item);
+        }
+    }
+
     public void addSilver(int amount) {
-        silver = silver + amount;
+        silver += amount;
     }
 
     public void addGold(int amount) {
-        gold = gold + amount;
+        gold += amount;
     }
 
     public void addExperience(int amount) {
-        experience = experience + amount;
+        experience += amount;
 
         if (experience >= level * 100) {
             experience = 0;
-            level = level + 1;
-            silver = silver + 100;
-            gold = gold + 2;
+            level++;
+            silver += 100;
+            gold += 2;
+            energy = 100;
         }
+    }
+
+    public void addXp(int amount) {
+        addExperience(amount);
+    }
+
+    public void spendEnergy(int amount) {
+        if (energy >= amount) {
+            energy -= amount;
+        }
+    }
+
+    public void restoreEnergy() {
+        energy = 100;
     }
 }

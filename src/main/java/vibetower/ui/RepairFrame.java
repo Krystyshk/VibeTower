@@ -1,11 +1,13 @@
 package vibetower.ui;
 
+import vibetower.model.GameState;
+
 import javax.swing.*;
 import java.awt.*;
 
 public class RepairFrame extends JFrame {
 
-    public RepairFrame() {
+    public RepairFrame(GameState gameState) {
         setTitle("VibeTower — Режим ремонту");
         setSize(900, 600);
         setLocationRelativeTo(null);

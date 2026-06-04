@@ -76,7 +76,7 @@ public class LoginFrame extends JFrame {
 
     private void openMainGame() {
         GameState gameState = SaveManager.loadGame();
-        HomeFrame homeFrame = new HomeFrame(gameState);
+        HomeFrame homeFrame = new HomeFrame();
         homeFrame.setVisible(true);
         dispose();
     }

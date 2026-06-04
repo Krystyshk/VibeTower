@@ -39,6 +39,7 @@ public class CurrencyPanel extends JPanel {
 
         panel.add(iconLabel);
         panel.add(amountLabel);
+
         return panel;
     }
 }

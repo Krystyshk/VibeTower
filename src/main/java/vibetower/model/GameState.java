@@ -11,6 +11,8 @@ public class GameState implements Serializable {
     private int experience;
     private int energy;
 
+    private long cafeCooldownEndTime;
+
     private ArrayList<Item> inventory;
     private ArrayList<Item> placedItems;
 
@@ -20,6 +22,8 @@ public class GameState implements Serializable {
         level = 1;
         experience = 0;
         energy = 100;
+
+        cafeCooldownEndTime = 0;
 
         inventory = new ArrayList<>();
         placedItems = new ArrayList<>();
@@ -41,6 +45,10 @@ public class GameState implements Serializable {
         return experience;
     }
 
+    public int getXp() {
+        return experience;
+    }
+
     public int getEnergy() {
         return energy;
     }
@@ -51,6 +59,14 @@ public class GameState implements Serializable {
 
     public ArrayList<Item> getPlacedItems() {
         return placedItems;
+    }
+
+    public long getCafeCooldownEndTime() {
+        return cafeCooldownEndTime;
+    }
+
+    public void setCafeCooldownEndTime(long cafeCooldownEndTime) {
+        this.cafeCooldownEndTime = cafeCooldownEndTime;
     }
 
     public boolean buyItem(Item item) {
@@ -78,16 +94,6 @@ public class GameState implements Serializable {
         gold += amount;
     }
 
-    public void spendEnergy(int amount) {
-        if (energy >= amount) {
-            energy -= amount;
-        }
-    }
-
-    public void restoreEnergy() {
-        energy = 100;
-    }
-
     public void addExperience(int amount) {
         experience += amount;
 
@@ -98,5 +104,19 @@ public class GameState implements Serializable {
             gold += 2;
             energy = 100;
         }
+    }
+
+    public void addXp(int amount) {
+        addExperience(amount);
+    }
+
+    public void spendEnergy(int amount) {
+        if (energy >= amount) {
+            energy -= amount;
+        }
+    }
+
+    public void restoreEnergy() {
+        energy = 100;
     }
 }

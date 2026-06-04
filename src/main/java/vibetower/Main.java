@@ -11,6 +11,7 @@ public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             GameState gameState = SaveManager.loadGame();
+
             StartFrame startFrame = new StartFrame(gameState);
             startFrame.setVisible(true);
         });

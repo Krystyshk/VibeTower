@@ -68,8 +68,8 @@ public class ShopFrame extends JFrame {
         ));
         card.setLayout(new BorderLayout());
 
-        JLabel itemIcon = new JLabel(getItemIcon(itemName), SwingConstants.CENTER);
-        itemIcon.setFont(new Font("Arial", Font.BOLD, 45));
+        JLabel itemIcon = new JLabel("▣", SwingConstants.CENTER);
+        itemIcon.setFont(new Font("Arial", Font.BOLD, 48));
         itemIcon.setForeground(new Color(120, 82, 160));
 
         JLabel nameLabel = new JLabel(itemName, SwingConstants.CENTER);
@@ -80,7 +80,11 @@ public class ShopFrame extends JFrame {
         priceLabel.setFont(new Font("Arial", Font.BOLD, 17));
         priceLabel.setForeground(new Color(150, 90, 20));
 
-        ImageButton buyButton = new ImageButton("/купити.png", 170, 50);
+        JButton buyButton = new JButton("Купити");
+        buyButton.setFont(new Font("Arial", Font.BOLD, 17));
+        buyButton.setBackground(new Color(255, 218, 130));
+        buyButton.setForeground(new Color(72, 37, 120));
+        buyButton.setFocusPainted(false);
 
         buyButton.addActionListener(e -> {
             Item item = new Item(itemName, price);
@@ -111,39 +115,11 @@ public class ShopFrame extends JFrame {
         textPanel.add(nameLabel);
         textPanel.add(priceLabel);
 
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setOpaque(false);
-        buttonPanel.setLayout(new GridBagLayout());
-        buttonPanel.add(buyButton);
-
         card.add(textPanel, BorderLayout.NORTH);
         card.add(itemIcon, BorderLayout.CENTER);
-        card.add(buttonPanel, BorderLayout.SOUTH);
+        card.add(buyButton, BorderLayout.SOUTH);
 
         return card;
-    }
-
-    private String getItemIcon(String name) {
-        if (name.equals("Диван")) {
-            return "🛋";
-        }
-        if (name.equals("Ліжко")) {
-            return "🛏";
-        }
-        if (name.equals("Стіл")) {
-            return "▤";
-        }
-        if (name.equals("Килим")) {
-            return "▭";
-        }
-        if (name.equals("Лампа")) {
-            return "💡";
-        }
-        if (name.equals("Картина")) {
-            return "▧";
-        }
-
-        return "▣";
     }
 
     private void refreshCurrency() {

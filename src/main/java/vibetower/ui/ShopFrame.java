@@ -35,6 +35,7 @@ public class ShopFrame extends JFrame {
 
         topPanel.add(titleLabel, BorderLayout.CENTER);
         topPanel.add(new CurrencyPanel(gameState), BorderLayout.EAST);
+
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
         JPanel shopPanel = new JPanel();
@@ -50,6 +51,7 @@ public class ShopFrame extends JFrame {
         shopPanel.add(createShopCard("Картина", 180));
 
         mainPanel.add(shopPanel, BorderLayout.CENTER);
+
         add(mainPanel, BorderLayout.CENTER);
     }
 
@@ -67,7 +69,7 @@ public class ShopFrame extends JFrame {
         card.setLayout(new BorderLayout());
 
         JLabel itemIcon = new JLabel(getItemIcon(itemName), SwingConstants.CENTER);
-        itemIcon.setFont(new Font("Arial", Font.BOLD, 48));
+        itemIcon.setFont(new Font("Arial", Font.BOLD, 45));
         itemIcon.setForeground(new Color(120, 82, 160));
 
         JLabel nameLabel = new JLabel(itemName, SwingConstants.CENTER);
@@ -78,11 +80,7 @@ public class ShopFrame extends JFrame {
         priceLabel.setFont(new Font("Arial", Font.BOLD, 17));
         priceLabel.setForeground(new Color(150, 90, 20));
 
-        JButton buyButton = new JButton("Купити");
-        buyButton.setFont(new Font("Arial", Font.BOLD, 17));
-        buyButton.setBackground(new Color(255, 218, 130));
-        buyButton.setForeground(new Color(72, 37, 120));
-        buyButton.setFocusPainted(false);
+        ImageButton buyButton = new ImageButton("/купити.png", 170, 50);
 
         buyButton.addActionListener(e -> {
             Item item = new Item(itemName, price);
@@ -95,6 +93,7 @@ public class ShopFrame extends JFrame {
                         "Покупка",
                         JOptionPane.INFORMATION_MESSAGE
                 );
+
                 refreshCurrency();
             } else {
                 JOptionPane.showMessageDialog(
@@ -112,10 +111,39 @@ public class ShopFrame extends JFrame {
         textPanel.add(nameLabel);
         textPanel.add(priceLabel);
 
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setOpaque(false);
+        buttonPanel.setLayout(new GridBagLayout());
+        buttonPanel.add(buyButton);
+
         card.add(textPanel, BorderLayout.NORTH);
         card.add(itemIcon, BorderLayout.CENTER);
-        card.add(buyButton, BorderLayout.SOUTH);
+        card.add(buttonPanel, BorderLayout.SOUTH);
+
         return card;
+    }
+
+    private String getItemIcon(String name) {
+        if (name.equals("Диван")) {
+            return "🛋";
+        }
+        if (name.equals("Ліжко")) {
+            return "🛏";
+        }
+        if (name.equals("Стіл")) {
+            return "▤";
+        }
+        if (name.equals("Килим")) {
+            return "▭";
+        }
+        if (name.equals("Лампа")) {
+            return "💡";
+        }
+        if (name.equals("Картина")) {
+            return "▧";
+        }
+
+        return "▣";
     }
 
     private void refreshCurrency() {
@@ -123,15 +151,5 @@ public class ShopFrame extends JFrame {
         topPanel.add(new CurrencyPanel(gameState), BorderLayout.EAST);
         topPanel.revalidate();
         topPanel.repaint();
-    }
-
-    private String getItemIcon(String name) {
-        if (name.equals("Диван")) return "🛋";
-        if (name.equals("Ліжко")) return "🛏";
-        if (name.equals("Стіл")) return "▤";
-        if (name.equals("Килим")) return "▭";
-        if (name.equals("Лампа")) return "💡";
-        if (name.equals("Картина")) return "▧";
-        return "▣";
     }
 }

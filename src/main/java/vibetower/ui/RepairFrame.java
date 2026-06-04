@@ -13,7 +13,7 @@ public class RepairFrame extends JFrame {
         this.gameState = gameState;
 
         setTitle("VibeTower — Режим ремонту");
-        setSize(900, 600);
+        setSize(900, 620);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -33,41 +33,42 @@ public class RepairFrame extends JFrame {
 
         topPanel.add(titleLabel, BorderLayout.CENTER);
         topPanel.add(new CurrencyPanel(gameState), BorderLayout.EAST);
+
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
         JPanel centerPanel = new JPanel();
-        centerPanel.setBackground(new Color(250, 250, 250));
-        centerPanel.setBorder(BorderFactory.createLineBorder(new Color(72, 37, 120), 4));
-        centerPanel.setLayout(null);
+        centerPanel.setBackground(Color.WHITE);
+        centerPanel.setLayout(new GridLayout(2, 2, 30, 30));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(90, 120, 120, 120));
 
-        JLabel roomLabel = new JLabel("Редагування кімнати", SwingConstants.CENTER);
-        roomLabel.setFont(new Font("Arial", Font.BOLD, 26));
-        roomLabel.setForeground(new Color(100, 70, 140));
-        roomLabel.setBounds(250, 80, 400, 50);
-        centerPanel.add(roomLabel);
+        ImageButton wallpaperButton = new ImageButton("/змінити шпалери.png", 300, 75);
+        ImageButton floorButton = new ImageButton("/змінити підлогу.png", 300, 75);
+        ImageButton saveButton = new ImageButton("/зберегти ремонт.png", 300, 75);
+        ImageButton cancelButton = new ImageButton("/скасувати.png", 300, 75);
 
-        JButton wallpaperButton = createMenuButton("Змінити шпалери");
-        wallpaperButton.setBounds(310, 170, 280, 45);
-        centerPanel.add(wallpaperButton);
+        wallpaperButton.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Шпалери змінено!");
+        });
 
-        JButton floorButton = createMenuButton("Змінити підлогу");
-        floorButton.setBounds(310, 230, 280, 45);
-        centerPanel.add(floorButton);
+        floorButton.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Підлогу змінено!");
+        });
 
-        JButton saveButton = createMenuButton("Зберегти ремонт");
-        saveButton.setBounds(310, 290, 280, 45);
-        centerPanel.add(saveButton);
+        saveButton.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Ремонт збережено!");
+        });
 
-        JButton cancelButton = createMenuButton("Скасувати");
-        cancelButton.setBounds(310, 350, 280, 45);
-        centerPanel.add(cancelButton);
+        cancelButton.addActionListener(e -> {
+            dispose();
+        });
 
-        wallpaperButton.addActionListener(e -> JOptionPane.showMessageDialog(this, "Шпалери змінено!"));
-        floorButton.addActionListener(e -> JOptionPane.showMessageDialog(this, "Підлогу змінено!"));
-        saveButton.addActionListener(e -> JOptionPane.showMessageDialog(this, "Ремонт збережено!"));
-        cancelButton.addActionListener(e -> dispose());
+        centerPanel.add(createButtonCell(wallpaperButton));
+        centerPanel.add(createButtonCell(floorButton));
+        centerPanel.add(createButtonCell(saveButton));
+        centerPanel.add(createButtonCell(cancelButton));
 
         mainPanel.add(centerPanel, BorderLayout.CENTER);
+
         add(mainPanel, BorderLayout.CENTER);
     }
 
@@ -75,12 +76,11 @@ public class RepairFrame extends JFrame {
         this(new GameState());
     }
 
-    private JButton createMenuButton(String text) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 18));
-        button.setBackground(new Color(255, 218, 130));
-        button.setForeground(new Color(72, 37, 120));
-        button.setFocusPainted(false);
-        return button;
+    private JPanel createButtonCell(ImageButton button) {
+        JPanel cell = new JPanel();
+        cell.setOpaque(false);
+        cell.setLayout(new GridBagLayout());
+        cell.add(button);
+        return cell;
     }
 }

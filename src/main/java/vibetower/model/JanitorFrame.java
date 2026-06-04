@@ -154,6 +154,7 @@ public class JanitorFrame extends JFrame {
             }
 
             updateStats();
+            SaveManager.saveGame(gameState); // Bug fix: зберігаємо після кожного прибирання
 
             String msg = "Прибрано! +" + silver + " 🪙  +8 XP  -4 ⚡";
             if (rare) msg += "\n🎉 Рідкісна знахідка! +1 золото  +15 XP";
@@ -244,4 +245,3 @@ public class JanitorFrame extends JFrame {
         }
     }
 }
-

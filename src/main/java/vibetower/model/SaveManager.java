@@ -1,5 +1,6 @@
 package vibetower.model;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
@@ -16,19 +17,27 @@ public class SaveManager {
             out.close();
             System.out.println("Прогрес збережено");
         } catch (Exception e) {
-            System.out.println("Помилка збереження");
+            System.out.println("Помилка збереження: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     public static GameState loadGame() {
+        File file = new File(FILE_NAME);
+        if (!file.exists()) {
+            System.out.println("Файл збереження не знайдено. Нова гра.");
+            return new GameState();
+        }
         try {
             ObjectInputStream in = new ObjectInputStream(new FileInputStream(FILE_NAME));
             GameState gameState = (GameState) in.readObject();
             in.close();
             return gameState;
         } catch (Exception e) {
-            System.out.println("Збереження не знайдено. Створено нову гру.");
+            // Bug fix: старий файл збереження несумісний з новою версією класу —
+            // видаляємо його і стартуємо нову гру замість краша
+            System.out.println("Збереження застаріле або пошкоджене, створюємо нову гру: " + e.getMessage());
+            file.delete();
             return new GameState();
         }
     }

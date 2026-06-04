@@ -5,6 +5,8 @@ import java.util.ArrayList;
 
 public class GameState implements Serializable {
 
+    private static final long serialVersionUID = 1L; // Фіксуємо версію для сумісності збережень
+
     private int silver;
     private int gold;
     private int level;

@@ -1,224 +1,233 @@
 package vibetower.ui;
 
-import vibetower.model.PlayerProfile;
+import vibetower.model.GameState;
+import vibetower.model.HomeFrame;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class CharacterCreatorFrame extends JFrame {
 
-    private JTextField nameField;
+    private final GameState gameState;
 
-    private JComboBox<String> genderBox;
-    private JComboBox<String> skinBox;
-    private JComboBox<String> hairStyleBox;
-    private JComboBox<String> hairColorBox;
-    private JComboBox<String> eyeColorBox;
-    private JComboBox<String> outfitBox;
+    private JTextField emailField;
+    private JPasswordField passwordField;
+    private JPasswordField repeatPasswordField;
+    private JTextField characterNameField;
 
-    private CharacterAvatarPanel avatarPanel;
+    private String selectedGender = "Жіночий персонаж";
 
-    public CharacterCreatorFrame() {
-        setTitle("VibeTower — Створення персонажа");
-        setSize(1100, 700);
+    public CharacterCreatorFrame(GameState gameState) {
+        this.gameState = gameState;
+
+        setTitle("VibeTower — Реєстрація");
+        setSize(1280, 720);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setResizable(false);
 
-        add(createHeaderPanel(), BorderLayout.NORTH);
-        add(createSettingsPanel(), BorderLayout.WEST);
+        BackgroundPanel mainPanel = new BackgroundPanel("/registration_screen.png");
+        mainPanel.setLayout(null);
 
-        avatarPanel = new CharacterAvatarPanel();
-        add(avatarPanel, BorderLayout.CENTER);
+        JButton femaleButton = createHotspotButton();
+        femaleButton.setBounds(455, 243, 195, 45);
+        femaleButton.addActionListener(e -> selectedGender = "Жіночий персонаж");
+        mainPanel.add(femaleButton);
 
-        add(createBottomPanel(), BorderLayout.SOUTH);
+        JButton maleButton = createHotspotButton();
+        maleButton.setBounds(665, 243, 215, 45);
+        maleButton.addActionListener(e -> selectedGender = "Чоловічий персонаж");
+        mainPanel.add(maleButton);
 
-        updatePreview();
+        /*
+         * ПОЛЯ ВВОДУ.
+         * Тут НЕМАЄ placeholder-тексту.
+         * Поля порожні, а курсор стоїть чітко всередині кожного поля.
+         */
 
-        setVisible(true);
-    }
+        emailField = createTextField();
+        emailField.setBounds(520, 342, 310, 24);
+        mainPanel.add(emailField);
 
-    private JPanel createHeaderPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(255, 248, 240));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+        passwordField = createPasswordField();
+        passwordField.setBounds(520, 402, 310, 24);
+        mainPanel.add(passwordField);
 
-        JLabel title = new JLabel("Створення персонажа", SwingConstants.CENTER);
-        title.setFont(new Font("Arial", Font.BOLD, 34));
-        title.setForeground(new Color(65, 45, 35));
+        repeatPasswordField = createPasswordField();
+        repeatPasswordField.setBounds(520, 462, 310, 24);
+        mainPanel.add(repeatPasswordField);
 
-        JLabel subtitle = new JLabel(
-                "Обери аватара у стилі VibeTower: голова 25%, тулуб 30%, ноги 45%",
-                SwingConstants.CENTER
-        );
-        subtitle.setFont(new Font("Arial", Font.PLAIN, 16));
-        subtitle.setForeground(new Color(105, 75, 55));
+        characterNameField = createTextField();
+        characterNameField.setBounds(520, 522, 310, 24);
+        mainPanel.add(characterNameField);
 
-        panel.add(title, BorderLayout.CENTER);
-        panel.add(subtitle, BorderLayout.SOUTH);
+        JButton registerButton = createHotspotButton();
+        registerButton.setBounds(500, 555, 350, 65);
+        registerButton.addActionListener(e -> registerUser());
+        mainPanel.add(registerButton);
 
-        return panel;
-    }
-
-    private JPanel createSettingsPanel() {
-        JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(360, 0));
-        panel.setLayout(new GridLayout(8, 1, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
-        panel.setBackground(new Color(255, 248, 240));
-
-        nameField = new JTextField();
-        nameField.setBorder(BorderFactory.createTitledBorder("Ім’я персонажа"));
-
-        genderBox = new JComboBox<>(new String[]{
-                "Жіночий",
-                "Чоловічий"
-        });
-
-        skinBox = new JComboBox<>(new String[]{
-                "Світла",
-                "Рожева",
-                "Смаглява",
-                "Темна"
-        });
-
-        hairStyleBox = new JComboBox<>(new String[]{
-                "Пучок",
-                "Довге",
-                "Коротке",
-                "Об’ємне"
-        });
-
-        hairColorBox = new JComboBox<>(new String[]{
-                "Каштановий",
-                "Блонд",
-                "Чорний",
-                "Рудий",
-                "Рожевий"
-        });
-
-        eyeColorBox = new JComboBox<>(new String[]{
-                "Карі",
-                "Блакитні",
-                "Зелені",
-                "Сірі"
-        });
-
-        outfitBox = new JComboBox<>(new String[]{
-                "Повсякденний",
-                "Світлий верх",
-                "Чорний костюм",
-                "Худі"
-        });
-
-        genderBox.setBorder(BorderFactory.createTitledBorder("Стать"));
-        skinBox.setBorder(BorderFactory.createTitledBorder("Колір шкіри"));
-        hairStyleBox.setBorder(BorderFactory.createTitledBorder("Зачіска"));
-        hairColorBox.setBorder(BorderFactory.createTitledBorder("Колір волосся"));
-        eyeColorBox.setBorder(BorderFactory.createTitledBorder("Колір очей"));
-        outfitBox.setBorder(BorderFactory.createTitledBorder("Одяг"));
-
-        genderBox.addActionListener(e -> updatePreview());
-        skinBox.addActionListener(e -> updatePreview());
-        hairStyleBox.addActionListener(e -> updatePreview());
-        hairColorBox.addActionListener(e -> updatePreview());
-        eyeColorBox.addActionListener(e -> updatePreview());
-        outfitBox.addActionListener(e -> updatePreview());
-
-        panel.add(nameField);
-        panel.add(genderBox);
-        panel.add(skinBox);
-        panel.add(hairStyleBox);
-        panel.add(hairColorBox);
-        panel.add(eyeColorBox);
-        panel.add(outfitBox);
-
-        JLabel note = new JLabel(
-                "<html><center>Це базовий макет персонажа.<br>Пізніше можна замінити його на PNG-аватар.</center></html>",
-                SwingConstants.CENTER
-        );
-        note.setFont(new Font("Arial", Font.PLAIN, 13));
-        note.setForeground(new Color(120, 90, 65));
-        panel.add(note);
-
-        return panel;
-    }
-
-    private JPanel createBottomPanel() {
-        JPanel panel = new JPanel();
-        panel.setBackground(new Color(255, 248, 240));
-        panel.setBorder(BorderFactory.createEmptyBorder(15, 20, 20, 20));
-
-        JButton backButton = new JButton("Назад");
-        JButton createButton = new JButton("Створити персонажа");
-
-        backButton.setFont(new Font("Arial", Font.BOLD, 16));
-        createButton.setFont(new Font("Arial", Font.BOLD, 16));
-
-        panel.add(backButton);
-        panel.add(createButton);
-
+        JButton backButton = createHotspotButton();
+        backButton.setBounds(555, 625, 190, 45);
         backButton.addActionListener(e -> {
-            new StartFrame();
+            StartFrame startFrame = new StartFrame(gameState);
+            startFrame.setVisible(true);
             dispose();
         });
+        mainPanel.add(backButton);
 
-        createButton.addActionListener(e -> createCharacter());
+        JButton loginButton = createHotspotButton();
+        loginButton.setBounds(650, 675, 200, 35);
+        loginButton.addActionListener(e -> {
+            StartFrame startFrame = new StartFrame(gameState);
+            startFrame.setVisible(true);
+            dispose();
+        });
+        mainPanel.add(loginButton);
 
-        return panel;
+        setContentPane(mainPanel);
     }
 
-    private void updatePreview() {
-        if (avatarPanel == null) {
-            return;
-        }
-
-        avatarPanel.updateAvatar(
-                getSelected(genderBox),
-                getSelected(skinBox),
-                getSelected(hairStyleBox),
-                getSelected(hairColorBox),
-                getSelected(eyeColorBox),
-                getSelected(outfitBox)
-        );
+    public CharacterCreatorFrame() {
+        this(new GameState());
     }
 
-    private void createCharacter() {
-        String name = nameField.getText().trim();
+    private JTextField createTextField() {
+        JTextField field = new JTextField();
 
-        if (name.isEmpty()) {
+        field.setFont(new Font("Avenir Next", Font.PLAIN, 16));
+        field.setForeground(Color.WHITE);
+        field.setCaretColor(Color.WHITE);
+
+        field.setOpaque(false);
+        field.setBorder(null);
+        field.setBackground(new Color(0, 0, 0, 0));
+
+        field.setHorizontalAlignment(JTextField.LEFT);
+
+        return field;
+    }
+
+    private JPasswordField createPasswordField() {
+        JPasswordField field = new JPasswordField();
+
+        field.setFont(new Font("Avenir Next", Font.PLAIN, 16));
+        field.setForeground(Color.WHITE);
+        field.setCaretColor(Color.WHITE);
+
+        field.setOpaque(false);
+        field.setBorder(null);
+        field.setBackground(new Color(0, 0, 0, 0));
+
+        field.setHorizontalAlignment(JTextField.LEFT);
+        field.setEchoChar('●');
+
+        return field;
+    }
+
+    private JButton createHotspotButton() {
+        JButton button = new JButton();
+
+        button.setOpaque(false);
+        button.setContentAreaFilled(false);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        return button;
+    }
+
+    private void registerUser() {
+        String email = emailField.getText().trim();
+        String password = new String(passwordField.getPassword()).trim();
+        String repeatPassword = new String(repeatPasswordField.getPassword()).trim();
+        String characterName = characterNameField.getText().trim();
+
+        if (email.isEmpty() || password.isEmpty() || repeatPassword.isEmpty() || characterName.isEmpty()) {
             JOptionPane.showMessageDialog(
                     this,
-                    "Введіть ім’я персонажа",
+                    "Заповніть усі поля!",
                     "Помилка",
                     JOptionPane.WARNING_MESSAGE
             );
             return;
         }
 
-        PlayerProfile profile = new PlayerProfile(
-                name,
-                getSelected(genderBox),
-                getSelected(skinBox),
-                getSelected(hairStyleBox),
-                getSelected(hairColorBox),
-                getSelected(eyeColorBox),
-                getSelected(outfitBox)
-        );
+        if (!email.contains("@") || !email.contains(".")) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Введіть коректний email!",
+                    "Помилка",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
+        if (!password.equals(repeatPassword)) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Паролі не співпадають!",
+                    "Помилка",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
+        if (characterName.length() < 3 || characterName.length() > 16) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Ім’я персонажа має містити від 3 до 16 символів!",
+                    "Помилка",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
 
         JOptionPane.showMessageDialog(
                 this,
-                "Персонажа створено!\nID: " + profile.getId() + "\nІм’я: " + profile.getName(),
+                "Акаунт створено!\n" +
+                        "Email: " + email + "\n" +
+                        "Ім’я персонажа: " + characterName + "\n" +
+                        "Тип персонажа: " + selectedGender,
                 "Успішно",
                 JOptionPane.INFORMATION_MESSAGE
         );
 
-        // Паспорт персонажа підключимо наступним комітом.
-        // Поки що просто залишаємо користувача на цьому екрані.
+        HomeFrame homeFrame = new HomeFrame(gameState);
+        homeFrame.setVisible(true);
+        dispose();
     }
 
-    private String getSelected(JComboBox<String> box) {
-        Object selected = box.getSelectedItem();
-        return selected == null ? "" : selected.toString();
+    private static class BackgroundPanel extends JPanel {
+
+        private final Image backgroundImage;
+
+        public BackgroundPanel(String imagePath) {
+            ImageIcon icon = new ImageIcon(BackgroundPanel.class.getResource(imagePath));
+
+            if (icon.getIconWidth() == -1) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Не знайдено картинку: " + imagePath,
+                        "Помилка",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+
+            backgroundImage = icon.getImage();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            g.drawImage(
+                    backgroundImage,
+                    0,
+                    0,
+                    getWidth(),
+                    getHeight(),
+                    this
+            );
+        }
     }
 }

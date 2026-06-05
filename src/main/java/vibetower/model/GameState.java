@@ -1,45 +1,34 @@
 package vibetower.model;
-import javax.swing.*;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
 public class GameState implements Serializable {
-    private int level;
-    private int xp;
+
+    private static final long serialVersionUID = 1L; // Фіксуємо версію для сумісності збережень
+
     private int silver;
     private int gold;
+    private int level;
+    private int experience;
     private int energy;
 
-    private String apartment;
+    private long cafeCooldownEndTime;
 
-    private ArrayList<String> inventory;
-    private ArrayList<String> placedFurniture;
-    private ArrayList<String> completedTasks;
+    private ArrayList<Item> inventory;
+    private ArrayList<Item> placedItems;
 
     public GameState() {
-        this.level = 1;
-        this.xp = 0;
-        this.silver = 500;
-        this.gold = 20;
-        this.energy = 100;
+        silver = 500;
+        gold = 20;
+        level = 5;
+        experience = 0;
+        energy = 100;
 
-        this.apartment = null;
+        cafeCooldownEndTime = 0;
 
-        this.inventory = new ArrayList<>();
-        this.placedFurniture = new ArrayList<>();
-        this.completedTasks = new ArrayList<>();
-    }
-
-    // ---------------------------
-    // GETTERS
-    // ---------------------------
-
-    public int getLevel() {
-        return level;
-    }
-
-    public int getXp() {
-        return xp;
+        inventory = new ArrayList<>();
+        placedItems = new ArrayList<>();
     }
 
     public int getSilver() {
@@ -50,53 +39,54 @@ public class GameState implements Serializable {
         return gold;
     }
 
+    public int getLevel() {
+        return level;
+    }
+
+    public int getExperience() {
+        return experience;
+    }
+
+    public int getXp() {
+        return experience;
+    }
+
     public int getEnergy() {
         return energy;
     }
 
-    public String getApartment() {
-        return apartment;
-    }
-
-    public ArrayList<String> getInventory() {
+    public ArrayList<Item> getInventory() {
         return inventory;
     }
 
-    public ArrayList<String> getPlacedFurniture() {
-        return placedFurniture;
+    public ArrayList<Item> getPlacedItems() {
+        return placedItems;
     }
 
-    public ArrayList<String> getCompletedTasks() {
-        return completedTasks;
+    public long getCafeCooldownEndTime() {
+        return cafeCooldownEndTime;
     }
 
-    // ---------------------------
-    // APARTMENT
-    // ---------------------------
-
-    public void setApartment(String apartment) {
-        this.apartment = apartment;
+    public void setCafeCooldownEndTime(long cafeCooldownEndTime) {
+        this.cafeCooldownEndTime = cafeCooldownEndTime;
     }
 
-    // ---------------------------
-    // ENERGY
-    // ---------------------------
+    public boolean buyItem(Item item) {
+        if (silver >= item.getPrice()) {
+            silver -= item.getPrice();
+            inventory.add(item);
+            addExperience(10);
+            return true;
+        }
 
-    public void restoreEnergy() {
-        this.energy = 100;
+        return false;
     }
 
-    public void spendEnergy(int amount) {
-        if (energy >= amount) {
-            energy -= amount;
-        } else {
-            energy = 0;
+    public void placeItem(Item item) {
+        if (!placedItems.contains(item)) {
+            placedItems.add(item);
         }
     }
-
-    // ---------------------------
-    // CURRENCY
-    // ---------------------------
 
     public void addSilver(int amount) {
         silver += amount;
@@ -106,6 +96,33 @@ public class GameState implements Serializable {
         gold += amount;
     }
 
+    public void addExperience(int amount) {
+        experience += amount;
+
+        if (experience >= level * 100) {
+            experience = 0;
+            level++;
+            silver += 100;
+            gold += 2;
+            energy = 100;
+        }
+    }
+
+    public void addXp(int amount) {
+        addExperience(amount);
+    }
+
+    public void spendEnergy(int amount) {
+        if (energy >= amount) {
+            energy -= amount;
+        }
+    }
+
+    public void restoreEnergy() {
+        energy = 100;
+    }
+
+    // Витратити срібло. Повертає true, якщо вистачало.
     public boolean spendSilver(int amount) {
         if (silver >= amount) {
             silver -= amount;
@@ -114,6 +131,7 @@ public class GameState implements Serializable {
         return false;
     }
 
+    // Витратити золото. Повертає true, якщо вистачало.
     public boolean spendGold(int amount) {
         if (gold >= amount) {
             gold -= amount;
@@ -122,90 +140,20 @@ public class GameState implements Serializable {
         return false;
     }
 
-    // ---------------------------
-    // INVENTORY
-    // ---------------------------
-
-    public void addItemToInventory(String item) {
-        inventory.add(item);
+    // Відновити енергію (не вище 100).
+    public void addEnergy(int amount) {
+        energy = Math.min(100, energy + amount);
     }
 
-    public void placeFurniture(String item) {
-        placedFurniture.add(item);
-    }
+    // Додаткові поля для стану локацій
+    private boolean janitorWorkDone = false;
+    private boolean npcQuestDone    = false;
+    private boolean cottonCandyDone = false;
 
-    // ---------------------------
-    // TASKS
-    // ---------------------------
-
-    public void completeTask(String taskName) {
-        if (!completedTasks.contains(taskName)) {
-            completedTasks.add(taskName);
-        }
-    }
-
-    public boolean isTaskCompleted(String taskName) {
-        return completedTasks.contains(taskName);
-    }
-
-    // ---------------------------
-    // XP AND LEVELS
-    // ---------------------------
-
-    public void addXp(int amount) {
-        xp += amount;
-        checkLevelUp();
-    }
-
-    private void checkLevelUp() {
-        int[] xpNeeded = {
-                0,     // просто заглушка для 0 рівня
-                100,   // 1 -> 2
-                250,   // 2 -> 3
-                450,   // 3 -> 4
-                700,   // 4 -> 5
-                1000,  // 5 -> 6
-                1350,  // 6 -> 7
-                1750,  // 7 -> 8
-                2200,  // 8 -> 9
-                2700   // 9 -> 10
-        };
-
-        while (level < 10 && xp >= xpNeeded[level]) {
-            xp -= xpNeeded[level];
-            level++;
-
-            JOptionPane.showMessageDialog(
-                    null,
-                    "Вітаємо! Ви перейшли на " + level + " рівень!"
-            );
-        }
-    }
-
-    public String getLevelDescription() {
-        switch (level) {
-            case 1:
-                return "Навчання та старт гри";
-            case 2:
-                return "Вибір власної квартири";
-            case 3:
-                return "Робота офіціантом і базовий ремонт";
-            case 4:
-                return "Парк і пляж";
-            case 5:
-                return "Кінотеатр";
-            case 6:
-                return "Салон краси";
-            case 7:
-                return "Нові меблі та спальня";
-            case 8:
-                return "Модні завдання та новий декор";
-            case 9:
-                return "Кухня та велика квартира";
-            case 10:
-                return "Максимальний рівень першої версії гри";
-            default:
-                return "Невідомий рівень";
-        }
-    }
+    public boolean isJanitorWorkDone()  { return janitorWorkDone; }
+    public void    setJanitorWorkDone() { this.janitorWorkDone = true; }
+    public boolean isNpcQuestDone()     { return npcQuestDone; }
+    public void    setNpcQuestDone()    { this.npcQuestDone = true; }
+    public boolean isCottonCandyDone()  { return cottonCandyDone; }
+    public void    setCottonCandyDone() { this.cottonCandyDone = true; }
 }

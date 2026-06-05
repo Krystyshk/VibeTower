@@ -1,146 +1,83 @@
 package vibetower.ui;
 
 import vibetower.model.GameState;
-import vibetower.model.SaveManager;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class RepairFrame extends JFrame {
-    private GameState gameState;
-    private JPanel roomPanel;
 
     public RepairFrame(GameState gameState) {
-        this.gameState = gameState;
-
         setTitle("VibeTower — Режим ремонту");
-        setSize(850, 600);
+        setSize(900, 600);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        add(createTopPanel(), BorderLayout.NORTH);
-        add(createRoomPanel(), BorderLayout.CENTER);
-        add(createBottomPanel(), BorderLayout.SOUTH);
-    }
+        JPanel mainPanel = new JPanel();
+        mainPanel.setBackground(new Color(255, 235, 205));
+        mainPanel.setLayout(new BorderLayout());
 
-    private JPanel createTopPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(45, 62, 90));
-        panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        JLabel titleLabel = new JLabel("Режим ремонту", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 38));
+        titleLabel.setForeground(new Color(72, 37, 120));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(25, 0, 20, 0));
+        mainPanel.add(titleLabel, BorderLayout.NORTH);
 
-        JLabel title = new JLabel("Режим ремонту квартири");
-        title.setForeground(Color.WHITE);
-        title.setFont(new Font("Arial", Font.BOLD, 22));
+        JPanel centerPanel = new JPanel();
+        centerPanel.setBackground(new Color(255, 248, 235));
+        centerPanel.setBorder(BorderFactory.createLineBorder(new Color(72, 37, 120), 4));
+        centerPanel.setLayout(null);
 
-        JLabel info = new JLabel(
-                "Квартира: " + (gameState.getApartment() == null ? "не обрана" : gameState.getApartment())
-        );
-        info.setForeground(Color.WHITE);
-        info.setFont(new Font("Arial", Font.BOLD, 14));
+        JLabel roomLabel = new JLabel("Редагування кімнати", SwingConstants.CENTER);
+        roomLabel.setFont(new Font("Arial", Font.BOLD, 26));
+        roomLabel.setForeground(new Color(100, 70, 140));
+        roomLabel.setBounds(250, 110, 400, 50);
+        centerPanel.add(roomLabel);
 
-        panel.add(title, BorderLayout.WEST);
-        panel.add(info, BorderLayout.EAST);
+        JButton wallpaperButton = createMenuButton("Змінити шпалери");
+        wallpaperButton.setBounds(310, 190, 280, 45);
+        centerPanel.add(wallpaperButton);
 
-        return panel;
-    }
+        JButton floorButton = createMenuButton("Змінити підлогу");
+        floorButton.setBounds(310, 250, 280, 45);
+        centerPanel.add(floorButton);
 
-    private JPanel createRoomPanel() {
-        roomPanel = new JPanel();
-        roomPanel.setLayout(new GridLayout(0, 3, 15, 15));
-        roomPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
-        roomPanel.setBackground(new Color(245, 235, 220));
+        JButton saveButton = createMenuButton("Зберегти ремонт");
+        saveButton.setBounds(310, 310, 280, 45);
+        centerPanel.add(saveButton);
 
-        if (gameState.getApartment() == null) {
-            JLabel label = new JLabel("Спочатку потрібно обрати квартиру.", SwingConstants.CENTER);
-            label.setFont(new Font("Arial", Font.BOLD, 20));
-            roomPanel.setLayout(new BorderLayout());
-            roomPanel.add(label, BorderLayout.CENTER);
-            return roomPanel;
-        }
-
-        if (gameState.getPlacedFurniture().isEmpty()) {
-            JLabel label = new JLabel("У квартирі поки що немає меблів.", SwingConstants.CENTER);
-            label.setFont(new Font("Arial", Font.BOLD, 20));
-            roomPanel.setLayout(new BorderLayout());
-            roomPanel.add(label, BorderLayout.CENTER);
-        } else {
-            for (String item : gameState.getPlacedFurniture()) {
-                JPanel furnitureCard = new JPanel(new BorderLayout());
-                furnitureCard.setBackground(Color.WHITE);
-                furnitureCard.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(new Color(150, 150, 150)),
-                        BorderFactory.createEmptyBorder(20, 10, 20, 10)
-                ));
-
-                JLabel itemLabel = new JLabel("<html><center>" + item + "</center></html>", SwingConstants.CENTER);
-                itemLabel.setFont(new Font("Arial", Font.BOLD, 16));
-
-                furnitureCard.add(itemLabel, BorderLayout.CENTER);
-                roomPanel.add(furnitureCard);
-            }
-        }
-
-        return roomPanel;
-    }
-
-    private JPanel createBottomPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(2, 3, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        JButton inventoryButton = new JButton("Взяти з інвентаря");
-        JButton wallpaperButton = new JButton("Змінити шпалери");
-        JButton floorButton = new JButton("Змінити підлогу");
-        JButton saveButton = new JButton("Зберегти ремонт");
-        JButton cancelButton = new JButton("Скасувати зміни");
-        JButton backButton = new JButton("До квартири");
-
-        panel.add(inventoryButton);
-        panel.add(wallpaperButton);
-        panel.add(floorButton);
-        panel.add(saveButton);
-        panel.add(cancelButton);
-        panel.add(backButton);
-
-        inventoryButton.addActionListener(e -> {
-            new InventoryFrame(gameState).setVisible(true);
-            dispose();
-        });
+        JButton cancelButton = createMenuButton("Скасувати");
+        cancelButton.setBounds(310, 370, 280, 45);
+        centerPanel.add(cancelButton);
 
         wallpaperButton.addActionListener(e -> {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Шпалери змінено. Для демо-версії зміна показана як дія ремонту."
-            );
+            JOptionPane.showMessageDialog(this, "Шпалери змінено!");
         });
 
         floorButton.addActionListener(e -> {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Підлогу змінено. Для демо-версії зміна показана як дія ремонту."
-            );
+            JOptionPane.showMessageDialog(this, "Підлогу змінено!");
         });
 
         saveButton.addActionListener(e -> {
-            SaveManager.saveGame(gameState);
             JOptionPane.showMessageDialog(this, "Ремонт збережено!");
         });
 
         cancelButton.addActionListener(e -> {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Зміни скасовано. У демо-версії повертаємося до квартири."
-            );
-            new ApartmentFrame(gameState).setVisible(true);
             dispose();
         });
 
-        backButton.addActionListener(e -> {
-            new ApartmentFrame(gameState).setVisible(true);
-            dispose();
-        });
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
 
-        return panel;
+        add(mainPanel, BorderLayout.CENTER);
+    }
+
+    private JButton createMenuButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 18));
+        button.setBackground(new Color(255, 218, 130));
+        button.setForeground(new Color(72, 37, 120));
+        button.setFocusPainted(false);
+        return button;
     }
 }

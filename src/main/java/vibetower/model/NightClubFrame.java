@@ -7,6 +7,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.Random;
+import javax.swing.Timer;
 
 /**
  * NightClubFrame — Нічний клуб.
@@ -26,8 +27,8 @@ public class NightClubFrame extends JFrame {
     private boolean danceDone    = false;
 
     // Координати бармена (ціль для коктейлю) та танцпол (ціль для танців)
-    private static final int BAR_X    = 560, BAR_Y    = 260;
-    private static final int DANCE_X  = 280, DANCE_Y  = 370;
+    private static final int BAR_X    = 560, BAR_Y    = 220;
+    private static final int DANCE_X  = 280, DANCE_Y  = 310;
 
     private static final String[] DANCE_NAMES = {
             "💃 Сальса", "🕺 Брейк-данс", "✨ Вільний стиль"
@@ -75,18 +76,18 @@ public class NightClubFrame extends JFrame {
         // ── Персонаж ──────────────────────────────────────────────────────
         characterLabel = new JLabel("👤", SwingConstants.CENTER);
         characterLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 35));
-        characterLabel.setBounds(380, 480, 50, 60);
+        characterLabel.setBounds(380, 400, 50, 60);
         bg.add(characterLabel);
 
         // ── Кнопка «Коктейль» (біля бару) ───────────────────────────────
-        JButton cocktailBtn = makeActionButton("🍹 Коктейль (-15🪙  +5⚡  +10XP)", 420, 570, 280, 36);
+        JButton cocktailBtn = makeActionButton("🍹 Коктейль (-15🪙  +5⚡  +10XP)", 420, 500, 280, 36);
         cocktailBtn.addActionListener(e -> {
             moveCharacter(BAR_X, BAR_Y, () -> drinkCocktail(cocktailBtn));
         });
         bg.add(cocktailBtn);
 
         // ── Кнопка «Танцювати» ───────────────────────────────────────────
-        JButton danceBtn = makeActionButton("🕺 Танцювати  (-8⚡  +15XP)", 100, 570, 250, 36);
+        JButton danceBtn = makeActionButton("🕺 Танцювати  (-8⚡  +15XP)", 100, 500, 250, 36);
         danceBtn.addActionListener(e -> {
             moveCharacter(DANCE_X, DANCE_Y, () -> dance(danceBtn));
         });
@@ -95,7 +96,7 @@ public class NightClubFrame extends JFrame {
         // ── NPC-підказка ─────────────────────────────────────────────────
         JLabel npcHint = makeHintLabel(
                 "<html><i>Сусідка: «Замов коктейль біля бару, а потім танцюй на танцполі!»</i></html>",
-                80, 610, 640, 30
+                80, 545, 640, 30
         );
         bg.add(npcHint);
 

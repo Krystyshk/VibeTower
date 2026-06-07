@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import javax.swing.Timer;
 
 /**
  * BeachFrame — Локація «Пляж» (з 4 рівня).
@@ -33,7 +34,7 @@ public class BeachFrame extends JFrame {
 
     // Позиції мушель
     private static final int[][] SHELL_POS = {
-            {120,440},{220,480},{340,500},{460,460},{580,490}
+            {120,360},{220,400},{340,420},{460,390},{580,410}
     };
 
     public BeachFrame(GameState gameState) {
@@ -70,23 +71,23 @@ public class BeachFrame extends JFrame {
         // ── Персонаж ─────────────────────────────────────────────────────────
         characterLabel = new JLabel("👤", SwingConstants.CENTER);
         characterLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 35));
-        characterLabel.setBounds(340, 350, 50, 60);
+        characterLabel.setBounds(340, 310, 50, 60);
         bg.add(characterLabel);
 
         // ── Кнопки кіосків ─────────────────────────────────────────────────
-        JButton lemonBtn = makeBtn("🍋 Лимонад (+15⚡, -20🪙)", 30, 565, 230, 34);
+        JButton lemonBtn = makeBtn("🍋 Лимонад (+15⚡, -20🪙)", 30, 490, 230, 34);
         lemonBtn.addActionListener(e -> moveCharacter(BAR_X, BAR_Y, () -> buyItem("lemonade")));
         bg.add(lemonBtn);
 
-        JButton iceBtn = makeBtn("🍦 Морозиво (+10⚡, -25🪙)", 275, 565, 230, 34);
+        JButton iceBtn = makeBtn("🍦 Морозиво (+10⚡, -25🪙)", 275, 490, 230, 34);
         iceBtn.addActionListener(e -> moveCharacter(BAR_X, BAR_Y, () -> buyItem("icecream")));
         bg.add(iceBtn);
 
-        JButton fruitBtn = makeBtn("🍉 Фрукти (+20⚡, -30🪙)", 520, 565, 250, 34);
+        JButton fruitBtn = makeBtn("🍉 Фрукти (+20⚡, -30🪙)", 520, 490, 250, 34);
         fruitBtn.addActionListener(e -> moveCharacter(BAR_X, BAR_Y, () -> buyItem("fruits")));
         bg.add(fruitBtn);
 
-        JButton ballBtn = makeBtn("🏐 Пляжний м'яч (-5⚡, +15XP)", 270, 610, 260, 34);
+        JButton ballBtn = makeBtn("🏐 Пляжний м'яч (-5⚡, +15XP)", 270, 535, 260, 34);
         ballBtn.addActionListener(e -> moveCharacter(BALL_X, BALL_Y, () -> playBall()));
         bg.add(ballBtn);
 
@@ -112,7 +113,7 @@ public class BeachFrame extends JFrame {
         JLabel hint = new JLabel(
                 "<html><i>Відпочивальник: «Збирай мушлі на піску або купи напій у барі!»</i></html>",
                 SwingConstants.CENTER);
-        hint.setBounds(80, 645, 640, 22);
+        hint.setBounds(80, 572, 640, 22);
         hint.setForeground(new Color(255, 245, 200));
         hint.setFont(new Font("Arial", Font.ITALIC, 12));
         bg.add(hint);

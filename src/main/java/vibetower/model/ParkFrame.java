@@ -7,6 +7,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.Random;
+import javax.swing.Timer;
 
 /**
  * ParkFrame — Локація «Парк» (з 4 рівня).
@@ -61,27 +62,27 @@ public class ParkFrame extends JFrame {
         // ── Персонаж ────────────────────────────────────────────────────────
         characterLabel = new JLabel("👤", SwingConstants.CENTER);
         characterLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 35));
-        characterLabel.setBounds(370, 480, 50, 60);
+        characterLabel.setBounds(370, 420, 50, 60);
         bg.add(characterLabel);
 
         // ── Кнопки-інтерактиви ─────────────────────────────────────────────
         // 1. Сік
-        JButton juiceBtn = makeBtn("🧃 Сік  (+10⚡, -20🪙)", JUICE_X - 10, 570, 220, 34);
+        JButton juiceBtn = makeBtn("🧃 Сік  (+10⚡, -20🪙)", JUICE_X - 10, 490, 220, 34);
         juiceBtn.addActionListener(e -> moveCharacter(JUICE_X, JUICE_Y, () -> buyJuice()));
         bg.add(juiceBtn);
 
         // 2. Солодка вата
-        JButton candyBtn = makeBtn("🍭 Солодка вата  (-30🪙, сюрприз!)", 350, 570, 280, 34);
+        JButton candyBtn = makeBtn("🍭 Солодка вата  (-30🪙, сюрприз!)", 350, 490, 280, 34);
         candyBtn.addActionListener(e -> moveCharacter(CANDY_X, CANDY_Y, () -> buyCottonCandy(candyBtn)));
         bg.add(candyBtn);
 
         // 3. Допомогти NPC (одноразово)
-        JButton npcBtn = makeBtn("🧑 Допомогти NPC  (+30-50🪙, +30XP)", 100, 610, 280, 34);
+        JButton npcBtn = makeBtn("🧑 Допомогти NPC  (+30-50🪙, +30XP)", 100, 530, 280, 34);
         npcBtn.addActionListener(e -> moveCharacter(NPC_X, NPC_Y, () -> helpNpc(npcBtn)));
         bg.add(npcBtn);
 
         // 4. Фото біля фонтану
-        JButton photoBtn = makeBtn("📸 Фото  (+5XP)", 430, 610, 180, 34);
+        JButton photoBtn = makeBtn("📸 Фото  (+5XP)", 430, 530, 180, 34);
         photoBtn.addActionListener(e -> moveCharacter(PHOTO_X, PHOTO_Y, () -> takePhoto()));
         bg.add(photoBtn);
 
@@ -89,7 +90,7 @@ public class ParkFrame extends JFrame {
         JLabel hint = new JLabel(
                 "<html><i>Перехожий: «Спробуй купити сік або солодку вату — кожен раз сюрприз!»</i></html>",
                 SwingConstants.CENTER);
-        hint.setBounds(80, 645, 640, 22);
+        hint.setBounds(80, 570, 640, 22);
         hint.setForeground(new Color(200, 240, 200));
         hint.setFont(new Font("Arial", Font.ITALIC, 12));
         bg.add(hint);

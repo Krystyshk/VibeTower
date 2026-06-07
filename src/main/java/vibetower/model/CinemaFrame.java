@@ -7,6 +7,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.Random;
+import javax.swing.Timer;
 
 /**
  * CinemaFrame — Кінотеатр (з 5 рівня).
@@ -26,6 +27,7 @@ public class CinemaFrame extends JFrame {
     private int ticketsSold    = 0;
     private int popcornSold    = 0;
     private int hallCleaned    = 0;
+    private JLabel workProgress; // Поле для оновлення прогресу роботи
 
     // Фільми та вікторина
     private static final String[][] MOVIES = {
@@ -76,14 +78,14 @@ public class CinemaFrame extends JFrame {
         // ── Персонаж ─────────────────────────────────────────────────────────
         characterLabel = new JLabel("👤", SwingConstants.CENTER);
         characterLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 35));
-        characterLabel.setBounds(380, 460, 50, 60);
+        characterLabel.setBounds(380, 380, 50, 60);
         bg.add(characterLabel);
 
         // ── NPC-підказка ─────────────────────────────────────────────────────
         JLabel npc = new JLabel(
                 "<html><i>Касир: «Купи квиток і насолоджуйся фільмом, або попрацюй у кінотеатрі!»</i></html>",
                 SwingConstants.CENTER);
-        npc.setBounds(80, 645, 640, 22);
+        npc.setBounds(80, 575, 640, 22);
         npc.setForeground(new Color(200, 180, 255));
         npc.setFont(new Font("Arial", Font.ITALIC, 12));
         bg.add(npc);
@@ -133,7 +135,7 @@ public class CinemaFrame extends JFrame {
         bg.add(seatBtn);
 
         // ── Інфо про прогрес роботи ──────────────────────────────────────────
-        JLabel workProgress = new JLabel("", SwingConstants.CENTER);
+        workProgress = new JLabel("Робота: квитків 0 | попкорн 0 | прибрань 0", SwingConstants.CENTER);
         workProgress.setBounds(50, 315, 700, 22);
         workProgress.setForeground(new Color(180, 220, 255));
         workProgress.setFont(new Font("Arial", Font.PLAIN, 12));
@@ -232,6 +234,8 @@ public class CinemaFrame extends JFrame {
         ticketsSold++;
         SaveManager.saveGame(gameState);
         updateStats();
+        if (workProgress != null) workProgress.setText(String.format("Квитків: %d  |  Попкорн: %d  |  Прибрань: %d", ticketsSold, popcornSold, hallCleaned));
+
         JOptionPane.showMessageDialog(this, "🎫 Квиток продано!\n+20 🪙  +15 XP  -5 ⚡\nПродано квитків: " + ticketsSold);
     }
 
@@ -243,6 +247,8 @@ public class CinemaFrame extends JFrame {
         popcornSold++;
         SaveManager.saveGame(gameState);
         updateStats();
+        if (workProgress != null) workProgress.setText(String.format("Квитків: %d  |  Попкорн: %d  |  Прибрань: %d", ticketsSold, popcornSold, hallCleaned));
+
         JOptionPane.showMessageDialog(this, "🍿 Попкорн видано!\n+15 🪙  +10 XP  -4 ⚡");
     }
 
@@ -258,6 +264,8 @@ public class CinemaFrame extends JFrame {
         hallCleaned++;
         SaveManager.saveGame(gameState);
         updateStats();
+        if (workProgress != null) workProgress.setText(String.format("Квитків: %d  |  Попкорн: %d  |  Прибрань: %d", ticketsSold, popcornSold, hallCleaned));
+
         JOptionPane.showMessageDialog(this, "🧹 Зал прибрано!\n+25 🪙  +20 XP  -8 ⚡\nПрибрань виконано: " + hallCleaned);
     }
 

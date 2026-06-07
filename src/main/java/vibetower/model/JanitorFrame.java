@@ -101,7 +101,7 @@ public class JanitorFrame extends JFrame {
                 ? "👩 Сусідка: «Клікай на кожен предмет сміття — персонаж підійде і прибере!»"
                 : "🧹 Клікай на сміття щоб прибрати. За кожен предмет отримаєш ресурси!";
         JLabel hint = new JLabel(npcText, SwingConstants.CENTER);
-        hint.setBounds(10, 548, 780, 26);
+        hint.setBounds(0, 580, 800, 26);
         hint.setForeground(new Color(200, 255, 180));
         hint.setFont(new Font("Arial", Font.ITALIC, 12));
         hint.setOpaque(true);
@@ -111,7 +111,7 @@ public class JanitorFrame extends JFrame {
         // ── Персонаж ────────────────────────────────────────────────────────
         characterLabel = new JLabel("🧑", SwingConstants.CENTER);
         characterLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 36));
-        characterLabel.setBounds(365, 420, 50, 58);
+        characterLabel.setBounds(365, 400, 50, 58);
         bg.add(characterLabel);
 
         // ── Сміття ──────────────────────────────────────────────────────────

@@ -25,6 +25,12 @@ public class CinemaFrame extends JFrame {
 
     // Лічильники роботи (макс 2 кожного)
     private int ticketsSold = 0;
+
+    // Кулдаун після зміни (30 хвилин)
+    private static final int CINEMA_COOLDOWN_SECS = 30 * 60;
+    private Timer cinemaCooldownTimer;
+    private int   cinemaCooldownLeft = 0;
+    private boolean cinemaCooldownActive = false;
     private int popcornGiven = 0;
     private int hallCleaned = 0;
     private int seatsHelped = 0;
@@ -64,6 +70,15 @@ public class CinemaFrame extends JFrame {
         this.gameState = gameState;
         this.workMode  = workMode;
 
+        // Перевіряємо кулдаун при вході (тільки для режиму роботи)
+        if (workMode) {
+            long diff = gameState.getCinemaWorkCooldownEndTime() - System.currentTimeMillis();
+            if (diff > 0) {
+                cinemaCooldownActive = true;
+                cinemaCooldownLeft = (int)(diff / 1000);
+            }
+        }
+
         setTitle("VibeTower — Кінотеатр 🎬");
         setSize(800, 650);
         setLocationRelativeTo(null);
@@ -95,7 +110,7 @@ public class CinemaFrame extends JFrame {
         // ── Персонаж ──────────────────────────────────────────────────────
         characterLabel = new JLabel("🧑", SwingConstants.CENTER);
         characterLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 36));
-        characterLabel.setBounds(350, 480, 50, 58);
+        characterLabel.setBounds(350, 460, 50, 58);
         bg.add(characterLabel);
 
         // ── NPC підказка ──────────────────────────────────────────────────
@@ -103,7 +118,7 @@ public class CinemaFrame extends JFrame {
                 ? "👔 Касир: «Виконуй кожну дію по 2 рази, потім завершуй зміну!»"
                 : "🎬 Касир: «Купи квиток і насолоджуйся фільмом!»";
         JLabel hint = new JLabel(hintText, SwingConstants.CENTER);
-        hint.setBounds(0, 624, 800, 22);
+        hint.setBounds(0, 580, 800, 22);
         hint.setForeground(new Color(200, 180, 255));
         hint.setFont(new Font("Arial", Font.ITALIC, 12));
         hint.setOpaque(true);
@@ -113,6 +128,16 @@ public class CinemaFrame extends JFrame {
         // ── Вміст залежно від режиму ──────────────────────────────────────
         if (workMode) {
             buildWorkUI(bg);
+            // Якщо кулдаун вже активний при вході — запускаємо таймер
+            if (cinemaCooldownActive) {
+                // Блокуємо кнопки
+                if (ticketBtn  != null) { ticketBtn.setEnabled(false);  }
+                if (popcornBtn != null) { popcornBtn.setEnabled(false);  }
+                if (cleanBtn   != null) { cleanBtn.setEnabled(false);   }
+                if (seatBtn    != null) { seatBtn.setEnabled(false);    }
+                if (finishBtn  != null) { finishBtn.setVisible(false);  }
+                startCinemaCooldownTimer();
+            }
         } else {
             buildVisitUI(bg);
         }
@@ -130,7 +155,7 @@ public class CinemaFrame extends JFrame {
     // ════════════════════════════════════════════════════════════════════════
     private void buildVisitUI(JPanel bg) {
         JLabel title = new JLabel("── Оберіть фільм та купіть квиток ──", SwingConstants.CENTER);
-        title.setBounds(50, 62, 700, 26);
+        title.setBounds(50, 56, 700, 22);
         title.setForeground(new Color(200, 170, 255));
         title.setFont(new Font("Arial", Font.BOLD, 15));
         bg.add(title);
@@ -140,7 +165,7 @@ public class CinemaFrame extends JFrame {
             final int idx = i;
             int row = i / 2, col = i % 2;
             JButton btn = makeBtn(MOVIES[i][0] + "   🎫 -50🪙", BTN_PURPLE);
-            btn.setBounds(60 + col * 390, 98 + row * 54, 370, 44);
+            btn.setBounds(60 + col * 390, 70 + row * 50, 370, 40);
             btn.addActionListener(e -> watchMovie(idx));
             bg.add(btn);
         }
@@ -151,7 +176,7 @@ public class CinemaFrame extends JFrame {
     // ════════════════════════════════════════════════════════════════════════
     private void buildWorkUI(JPanel bg) {
         JLabel title = new JLabel("── Робота у кінотеатрі ──", SwingConstants.CENTER);
-        title.setBounds(50, 62, 700, 26);
+        title.setBounds(50, 56, 700, 22);
         title.setForeground(new Color(120, 210, 255));
         title.setFont(new Font("Arial", Font.BOLD, 15));
         bg.add(title);
@@ -162,10 +187,10 @@ public class CinemaFrame extends JFrame {
         cleanBtn   = makeBtn("🧹  Прибрати зал      (+25🪙 +20XP -8⚡)  [0/2]", BTN_TEAL);
         seatBtn    = makeBtn("🗺  Допомогти з місцем (+10XP ±🌟)         [0/2]", BTN_TEAL);
 
-        ticketBtn.setBounds(30, 98, 360, 44);
-        popcornBtn.setBounds(410, 98, 360, 44);
-        cleanBtn.setBounds(30, 152, 360, 44);
-        seatBtn.setBounds(410, 152, 360, 44);
+        ticketBtn.setBounds(30, 70, 360, 40);
+        popcornBtn.setBounds(410, 70, 360, 40);
+        cleanBtn.setBounds(30, 118, 360, 40);
+        seatBtn.setBounds(410, 118, 360, 40);
 
         ticketBtn.addActionListener(e ->
                 moveCharacter(140, 370, () -> doWorkAction("ticket")));
@@ -183,7 +208,7 @@ public class CinemaFrame extends JFrame {
 
         // Прогрес роботи
         workProgressLabel = new JLabel("", SwingConstants.CENTER);
-        workProgressLabel.setBounds(30, 206, 740, 22);
+        workProgressLabel.setBounds(30, 164, 740, 20);
         workProgressLabel.setForeground(new Color(180, 220, 255));
         workProgressLabel.setFont(new Font("Arial", Font.PLAIN, 12));
         bg.add(workProgressLabel);
@@ -191,7 +216,7 @@ public class CinemaFrame extends JFrame {
 
         // Кнопка завершення зміни
         finishBtn = makeBtn("✅  Завершити зміну  (+80🪙 +60XP)", BTN_GREEN);
-        finishBtn.setBounds(220, 238, 360, 44);
+        finishBtn.setBounds(220, 190, 360, 40);
         finishBtn.setEnabled(false);
         finishBtn.addActionListener(e -> finishWorkShift());
         bg.add(finishBtn);
@@ -255,10 +280,61 @@ public class CinemaFrame extends JFrame {
 
     private void finishWorkShift() {
         gameState.addSilver(80); gameState.addXp(60);
+
+        // Встановлюємо кулдаун 30 хвилин
+        long end = System.currentTimeMillis() + CINEMA_COOLDOWN_SECS * 1000L;
+        gameState.setCinemaWorkCooldownEndTime(end);
+        cinemaCooldownActive = true;
+        cinemaCooldownLeft = CINEMA_COOLDOWN_SECS;
+
         SaveManager.saveGame(gameState);
         updateStats();
-        JOptionPane.showMessageDialog(this, "💼 Зміну завершено!\n+80 🪙  +60 XP\nДякуємо за роботу!");
-        goToMap();
+        JOptionPane.showMessageDialog(this,
+                "💼 Зміну завершено!\n+80 🪙  +60 XP\nНаступна зміна через 30 хвилин.");
+
+        // Блокуємо всі кнопки роботи
+        if (ticketBtn  != null) { ticketBtn.setEnabled(false);  ticketBtn.setText("🎫  Продати квиток  [заблоковано]"); }
+        if (popcornBtn != null) { popcornBtn.setEnabled(false); popcornBtn.setText("🍿  Видати попкорн  [заблоковано]"); }
+        if (cleanBtn   != null) { cleanBtn.setEnabled(false);   cleanBtn.setText("🧹  Прибрати зал  [заблоковано]"); }
+        if (seatBtn    != null) { seatBtn.setEnabled(false);    seatBtn.setText("🗺  Допомогти  [заблоковано]"); }
+        if (finishBtn  != null)   finishBtn.setVisible(false);
+
+        startCinemaCooldownTimer();
+    }
+
+    private void startCinemaCooldownTimer() {
+        if (cinemaCooldownTimer != null) cinemaCooldownTimer.stop();
+        cinemaCooldownTimer = new Timer(1000, e -> {
+            long end = gameState.getCinemaWorkCooldownEndTime();
+            if (end == 0) { cinemaCooldownTimer.stop(); return; }
+            long d = end - System.currentTimeMillis();
+            if (d > 0) {
+                cinemaCooldownLeft = (int)(d / 1000);
+                updateStats();
+            } else {
+                // Кулдаун завершено — розблоковуємо
+                gameState.setCinemaWorkCooldownEndTime(0);
+                cinemaCooldownActive = false;
+                cinemaCooldownLeft = 0;
+                cinemaCooldownTimer.stop();
+                resetWorkShift();
+                updateStats();
+                JOptionPane.showMessageDialog(CinemaFrame.this,
+                        "🎬 Можна брати нову зміну у кінотеатрі!",
+                        "Нова зміна", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        cinemaCooldownTimer.start();
+    }
+
+    private void resetWorkShift() {
+        ticketsSold = 0; popcornGiven = 0; hallCleaned = 0; seatsHelped = 0;
+        if (ticketBtn  != null) { ticketBtn.setEnabled(true);  ticketBtn.setText("🎫  Продати квиток    (+20🪙 +15XP -5⚡)  [0/2]"); }
+        if (popcornBtn != null) { popcornBtn.setEnabled(true); popcornBtn.setText("🍿  Видати попкорн    (+15🪙 +10XP -4⚡)  [0/2]"); }
+        if (cleanBtn   != null) { cleanBtn.setEnabled(true);   cleanBtn.setText("🧹  Прибрати зал      (+25🪙 +20XP -8⚡)  [0/2]"); }
+        if (seatBtn    != null) { seatBtn.setEnabled(true);    seatBtn.setText("🗺  Допомогти з місцем (+10XP ±🌟)         [0/2]"); }
+        if (finishBtn  != null) { finishBtn.setEnabled(false); finishBtn.setVisible(true); }
+        if (workProgressLabel != null) updateWorkProgress();
     }
 
     private void updateWorkProgress() {
@@ -353,8 +429,13 @@ public class CinemaFrame extends JFrame {
     //  ДОПОМІЖНІ
     // ════════════════════════════════════════════════════════════════════════
     private void updateStats() {
-        statsLabel.setText(String.format("⚡ %d/100  |  🪙 %d  |  🌟 %d  |  XP: %d",
-                gameState.getEnergy(), gameState.getSilver(), gameState.getGold(), gameState.getXp()));
+        String timer = (workMode && cinemaCooldownActive && cinemaCooldownLeft > 0)
+                ? String.format("  ⏳ До нової зміни: %02d:%02d",
+                cinemaCooldownLeft / 60, cinemaCooldownLeft % 60)
+                : "";
+        statsLabel.setText(String.format("⚡ %d/100  |  🪙 %d  |  🌟 %d  |  XP: %d%s",
+                gameState.getEnergy(), gameState.getSilver(), gameState.getGold(),
+                gameState.getXp(), timer));
     }
 
     private JButton makeBtn(String text, Color color) {
@@ -384,6 +465,7 @@ public class CinemaFrame extends JFrame {
 
     private void goToMap() {
         if (movementTimer != null) movementTimer.stop();
+        if (cinemaCooldownTimer != null) cinemaCooldownTimer.stop();
         SaveManager.saveGame(gameState);
         new MapFrame(gameState).setVisible(true);
         dispose();

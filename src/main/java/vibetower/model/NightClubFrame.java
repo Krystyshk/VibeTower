@@ -76,13 +76,13 @@ public class NightClubFrame extends JFrame {
         // ── Персонаж ──────────────────────────────────────────────────────
         characterLabel = new JLabel("👤", SwingConstants.CENTER);
         characterLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 35));
-        characterLabel.setBounds(380, 400, 50, 60);
+        characterLabel.setBounds(380, 360, 50, 60);
         bg.add(characterLabel);
 
         // ── Кнопка «Коктейль» (біля бару) ───────────────────────────────
         // ── Нижня панель кнопок ──────────────────────────────────────────
         JPanel btnPanel = new JPanel(null);
-        btnPanel.setBounds(0, 578, 800, 46);
+        btnPanel.setBounds(0, 542, 800, 42);
         btnPanel.setBackground(new Color(20, 10, 50, 210));
         bg.add(btnPanel);
 
@@ -99,7 +99,7 @@ public class NightClubFrame extends JFrame {
         // ── NPC-підказка ─────────────────────────────────────────────────
         JLabel npcHint = makeHintLabel(
                 "<html><i>Сусідка: «Замов коктейль біля бару, а потім танцюй на танцполі!»</i></html>",
-                80, 545, 640, 30
+                0, 584, 800, 24
         );
         bg.add(npcHint);
 

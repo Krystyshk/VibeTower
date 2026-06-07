@@ -71,51 +71,57 @@ public class CafeFrame extends JFrame {
         bg.setLayout(null);
         setContentPane(bg);
 
-        // ── Топ-панель ───────────────────────────────────────────────────────
+        // ── Топ-панель (єдиний рядок, як у всіх інших фреймах) ──────────────
         JPanel top = new JPanel(null);
-        top.setBounds(0, 0, 800, 56);
-        top.setBackground(STATS_BG);
+        top.setBounds(0, 0, 800, 50);
+        top.setBackground(new Color(30, 30, 30, 220));
         bg.add(top);
 
         statsLabel = new JLabel();
         statsLabel.setForeground(Color.WHITE);
         statsLabel.setFont(new Font("Arial", Font.BOLD, 13));
-        statsLabel.setBounds(10, 4, 480, 22);
+        statsLabel.setBounds(10, 12, 320, 26);
         top.add(statsLabel);
-
-        // Шкала енергії
-        energyBar = new JLabel();
-        energyBar.setBounds(10, 28, 320, 20);
-        energyBar.setFont(new Font("Arial", Font.BOLD, 11));
-        top.add(energyBar);
 
         // Кнопки режимів
         JButton visitBtn = roundBtn("🍽  Меню кафе", new Color(60,140,200));
-        visitBtn.setBounds(340, 8, 150, 38);
+        visitBtn.setBounds(340, 6, 150, 38);
         visitBtn.addActionListener(e -> openMenuPopup(bg));
         top.add(visitBtn);
 
         JButton workBtn = roundBtn("👔  Працювати", new Color(180,130,20));
-        workBtn.setBounds(500, 8, 150, 38);
+        workBtn.setBounds(500, 6, 150, 38);
         workBtn.addActionListener(e -> {
+            if (isCooldown) {
+                int m = cooldownLeft / 60, s = cooldownLeft % 60;
+                JOptionPane.showMessageDialog(this,
+                        String.format("⏳ Зміна закінчилась! Нова зміна через %02d:%02d.", m, s),
+                        "Перерва", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             workMode = true;
             activateWorkMode(bg);
             visitBtn.setVisible(false);
             workBtn.setVisible(false);
-            finishShiftBtn.setVisible(true);  // одразу показуємо кнопку завершення
+            finishShiftBtn.setVisible(true);
         });
         top.add(workBtn);
 
         finishShiftBtn = roundBtn("✅  Завершити зміну", BTN_GREEN);
-        finishShiftBtn.setBounds(340, 8, 200, 38);  // same spot as visitBtn, shown when working
+        finishShiftBtn.setBounds(340, 6, 210, 38);
         finishShiftBtn.setVisible(false);
         finishShiftBtn.addActionListener(e -> completeShift());
         top.add(finishShiftBtn);
 
-        JButton backBtn = roundBtn("↩  Карта", new Color(80,80,100));
-        backBtn.setBounds(688, 8, 100, 38);
+        JButton backBtn = roundBtn("↩ На карту", new Color(60, 65, 80));
+        backBtn.setBounds(676, 6, 112, 38);
         backBtn.addActionListener(e -> { stopTimers(); new MapFrame(gameState).setVisible(true); dispose(); });
         top.add(backBtn);
+
+        // energyBar — прихований (залишаємо поле щоб не ламати updateStats)
+        energyBar = new JLabel();
+        energyBar.setVisible(false);
+        top.add(energyBar);
 
         updateStats();
 
@@ -166,7 +172,7 @@ public class CafeFrame extends JFrame {
             }
         };
         overlay.setOpaque(false);
-        overlay.setBounds(0, 0, 800, 650);
+        overlay.setBounds(0, 0, 800, 700);
         bg.add(overlay, Integer.valueOf(10));
         bg.revalidate();
         bg.repaint();
@@ -319,8 +325,6 @@ public class CafeFrame extends JFrame {
         tables = new TableWidget[]{
                 new TableWidget(90,  145, bg),
                 new TableWidget(245, 280, bg),
-                new TableWidget(470, 200, bg),
-                new TableWidget(560, 350, bg)
         };
         ordersLeft = tables.length;
 
@@ -330,7 +334,7 @@ public class CafeFrame extends JFrame {
 
         // Підказка
         JLabel hint = new JLabel("💬 Натискай на 📄 замовлення, підходь до столика і виконуй!", SwingConstants.CENTER);
-        hint.setBounds(50, 590, 700, 26);
+        hint.setBounds(0, 580, 800, 24);
         hint.setForeground(new Color(255, 240, 180));
         hint.setFont(new Font("Arial", Font.ITALIC, 12));
         hint.setOpaque(true);
@@ -420,16 +424,11 @@ public class CafeFrame extends JFrame {
     // ════════════════════════════════════════════════════════════════════════
     private void updateStats() {
         String timer = isCooldown
-                ? String.format("  ⏳ %02d:%02d", cooldownLeft/60, cooldownLeft%60)
+                ? String.format("  ⏳ До зміни: %02d:%02d", cooldownLeft/60, cooldownLeft%60)
                 : "";
-        statsLabel.setText(String.format("⚡%d  🪙%d  🌟%d  XP:%d%s",
-                gameState.getEnergy(), gameState.getSilver(), gameState.getGold(), gameState.getXp(), timer));
-        int e = gameState.getEnergy();
-        StringBuilder bar = new StringBuilder("⚡ ");
-        for (int i = 0; i < 10; i++) bar.append(i < e/10 ? "█" : "░");
-        bar.append(" ").append(e).append("%");
-        energyBar.setText(bar.toString());
-        energyBar.setForeground(e > 50 ? new Color(80,220,80) : e > 20 ? new Color(220,180,0) : new Color(220,60,60));
+        statsLabel.setText(String.format("⚡ %d/100  |  🪙 %d  |  🌟 %d  |  XP: %d%s",
+                gameState.getEnergy(), gameState.getSilver(), gameState.getGold(),
+                gameState.getXp(), timer));
     }
 
     private void stopTimers() {

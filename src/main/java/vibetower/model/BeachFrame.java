@@ -37,7 +37,7 @@ public class BeachFrame extends JFrame {
     private static final int BALL_X = 350, BALL_Y = 370;
 
     private static final int[][] SHELL_POS = {
-            {120, 530}, {230, 570}, {370, 590}, {490, 555}, {600, 545}
+            {100, 370}, {210, 400}, {340, 415}, {460, 385}, {580, 375}
     };
 
     private static final Color TOP_BG   = new Color(20, 70, 130, 220);
@@ -92,18 +92,18 @@ public class BeachFrame extends JFrame {
         // ── Персонаж ────────────────────────────────────────────────────────
         characterLabel = new JLabel("🧑", SwingConstants.CENTER);
         characterLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 36));
-        characterLabel.setBounds(360, 360, 50, 58);
+        characterLabel.setBounds(360, 290, 50, 58);
         bg.add(characterLabel);
 
         // ── Кнопки внизу (стиль як кафе) ────────────────────────────────────
         JPanel btnPanel = buildButtonPanel();
-        btnPanel.setBounds(0, 580, 800, 60);
+        btnPanel.setBounds(0, 542, 800, 42);
         bg.add(btnPanel);
 
         // ── NPC підказка ────────────────────────────────────────────────────
         JLabel hint = new JLabel("🌊 Відпочивальник: «Збирай мушлі на піску або купи напій у барі!»",
                 SwingConstants.CENTER);
-        hint.setBounds(0, 624, 800, 22);
+        hint.setBounds(0, 586, 800, 22);
         hint.setForeground(new Color(255, 245, 200));
         hint.setFont(new Font("Arial", Font.ITALIC, 12));
         hint.setOpaque(true);
@@ -143,18 +143,26 @@ public class BeachFrame extends JFrame {
         });
 
         // ── Таймер кулдауну мушель ─────────────────────────────────────────
+        // Запускаємо таймер тільки якщо кулдаун реально активний
         shellCooldownTimer = new Timer(1000, e -> {
-            long d = gameState.getShellCooldownEndTime() - System.currentTimeMillis();
+            long end = gameState.getShellCooldownEndTime();
+            if (end == 0) return; // кулдаун не встановлений — нічого не робимо
+            long d = end - System.currentTimeMillis();
             if (d > 0) {
                 shellCooldownLeft = (int)(d / 1000);
                 updateStats(true);
             } else {
-                shellCooldownLeft = 0;
+                // Кулдаун закінчився — скидаємо ОДИН РАЗ
                 gameState.setShellCooldownEndTime(0);
+                shellCooldownLeft = 0;
                 shellsCollected = 0;
                 for (JLabel s : shellLabels) s.setVisible(true);
                 updateStats(false);
-                JOptionPane.showMessageDialog(this, "🐚 Мушлі знову з'явились на пляжі!", "Оновлення", JOptionPane.INFORMATION_MESSAGE);
+                shellCooldownTimer.stop(); // зупиняємо щоб не спрацьовувало знову
+                JOptionPane.showMessageDialog(BeachFrame.this,
+                        "🐚 Мушлі знову з'явились на пляжі!",
+                        "Оновлення", JOptionPane.INFORMATION_MESSAGE);
+                shellCooldownTimer.start(); // відновлюємо для наступного разу
             }
         });
         shellCooldownTimer.start();

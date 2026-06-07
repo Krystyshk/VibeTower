@@ -61,12 +61,12 @@ public class ParkFrame extends JFrame {
         // ── Персонаж ────────────────────────────────────────────────────────
         characterLabel = new JLabel("👤", SwingConstants.CENTER);
         characterLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 35));
-        characterLabel.setBounds(370, 420, 50, 60);
+        characterLabel.setBounds(370, 370, 50, 60);
         bg.add(characterLabel);
 
         // ── Кнопки внизу (стиль як кафе) ────────────────────────────────────
         JPanel btnPanel = new JPanel(null);
-        btnPanel.setBounds(0, 578, 800, 46);
+        btnPanel.setBounds(0, 542, 800, 42);
         btnPanel.setBackground(new Color(20, 60, 20, 200));
         bg.add(btnPanel);
 
@@ -93,7 +93,7 @@ public class ParkFrame extends JFrame {
         JLabel hint = new JLabel(
                 "<html><i>Перехожий: «Спробуй купити сік або солодку вату — кожен раз сюрприз!»</i></html>",
                 SwingConstants.CENTER);
-        hint.setBounds(0, 624, 800, 22);
+        hint.setBounds(0, 586, 800, 22);
         hint.setForeground(new Color(200, 240, 200));
         hint.setOpaque(true);
         hint.setBackground(new Color(10, 40, 10, 190));

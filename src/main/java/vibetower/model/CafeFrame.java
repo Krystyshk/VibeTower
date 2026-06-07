@@ -100,13 +100,14 @@ public class CafeFrame extends JFrame {
         workBtn.addActionListener(e -> {
             workMode = true;
             activateWorkMode(bg);
-            visitBtn.setEnabled(false);
-            workBtn.setEnabled(false);
+            visitBtn.setVisible(false);
+            workBtn.setVisible(false);
+            finishShiftBtn.setVisible(true);  // одразу показуємо кнопку завершення
         });
         top.add(workBtn);
 
         finishShiftBtn = roundBtn("✅  Завершити зміну", BTN_GREEN);
-        finishShiftBtn.setBounds(500, 8, 180, 38);
+        finishShiftBtn.setBounds(340, 8, 200, 38);  // same spot as visitBtn, shown when working
         finishShiftBtn.setVisible(false);
         finishShiftBtn.addActionListener(e -> completeShift());
         top.add(finishShiftBtn);
@@ -329,7 +330,7 @@ public class CafeFrame extends JFrame {
 
         // Підказка
         JLabel hint = new JLabel("💬 Натискай на 📄 замовлення, підходь до столика і виконуй!", SwingConstants.CENTER);
-        hint.setBounds(50, 600, 700, 26);
+        hint.setBounds(50, 590, 700, 26);
         hint.setForeground(new Color(255, 240, 180));
         hint.setFont(new Font("Arial", Font.ITALIC, 12));
         hint.setOpaque(true);
@@ -367,7 +368,7 @@ public class CafeFrame extends JFrame {
             String msg = "✅ Замовлення виконано!\n+" + silver + " 🪙  +10 XP  -5 ⚡";
             if (gotGold) msg += "\n🎉 +1 🌟 за 15-те замовлення!";
             JOptionPane.showMessageDialog(this, msg);
-            if (ordersLeft == 0) { finishShiftBtn.setVisible(true); JOptionPane.showMessageDialog(this, "🎉 Всі столики обслужені! Натисни «Завершити зміну»."); }
+            if (ordersLeft == 0) { JOptionPane.showMessageDialog(this, "🎉 Всі столики обслужені! Натисни «Завершити зміну» зверху."); }
             targetTable = null;
         });
     }

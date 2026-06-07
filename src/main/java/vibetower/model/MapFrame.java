@@ -152,7 +152,7 @@ public class MapFrame extends JFrame {
         p.add(locationCard("🏖", "Пляж",         "Мушлі та напої",    4, lvl,
                 () -> { new BeachFrame(gameState).setVisible(true); dispose(); }));
         p.add(locationCard("🎬", "Кінотеатр",    "Фільми та попкорн", 5, lvl,
-                () -> { new CinemaFrame(gameState).setVisible(true); dispose(); }));
+                () -> { new CinemaFrame(gameState, false).setVisible(true); dispose(); }));
         p.add(new JPanel() {{ setOpaque(false); }}); // порожня клітинка
         return p;
     }
@@ -168,7 +168,7 @@ public class MapFrame extends JFrame {
         p.add(jobCard("🧹", "Двірник",     "Прибирання · +6-10🪙 · -4⚡", 1, lvl,
                 () -> { new JanitorFrame(gameState, false).setVisible(true); dispose(); }));
         p.add(jobCard("🎬", "Працівник\nкінотеатру", "Каса · +15-25🪙 · -4⚡", 5, lvl,
-                () -> { new CinemaFrame(gameState).setVisible(true); dispose(); }));
+                () -> { new CinemaFrame(gameState, true).setVisible(true); dispose(); }));
         // Порожні
         for (int i = 0; i < 3; i++) p.add(new JPanel() {{ setOpaque(false); }});
         return p;

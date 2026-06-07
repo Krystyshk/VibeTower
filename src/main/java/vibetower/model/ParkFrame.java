@@ -26,7 +26,6 @@ public class ParkFrame extends JFrame {
     private static final int JUICE_X   = 70,  JUICE_Y   = 320;
     private static final int CANDY_X   = 630, CANDY_Y   = 270;
     private static final int NPC_X     = 340, NPC_Y     = 170;
-    private static final int PHOTO_X   = 400, PHOTO_Y   = 300;
 
     public ParkFrame(GameState gameState) {
         this.gameState = gameState;
@@ -65,33 +64,39 @@ public class ParkFrame extends JFrame {
         characterLabel.setBounds(370, 420, 50, 60);
         bg.add(characterLabel);
 
-        // ── Кнопки-інтерактиви ─────────────────────────────────────────────
-        // 1. Сік
-        JButton juiceBtn = makeBtn("🧃 Сік  (+10⚡, -20🪙)", JUICE_X - 10, 490, 220, 34);
+        // ── Кнопки внизу (стиль як кафе) ────────────────────────────────────
+        JPanel btnPanel = new JPanel(null);
+        btnPanel.setBounds(0, 578, 800, 46);
+        btnPanel.setBackground(new Color(20, 60, 20, 200));
+        bg.add(btnPanel);
+
+        JButton juiceBtn = makeBtn("🧃  Сік  (+10⚡, -20🪙)", new Color(30, 140, 60));
+        juiceBtn.setBounds(10, 4, 200, 38);
         juiceBtn.addActionListener(e -> moveCharacter(JUICE_X, JUICE_Y, () -> buyJuice()));
-        bg.add(juiceBtn);
+        btnPanel.add(juiceBtn);
 
-        // 2. Солодка вата
-        JButton candyBtn = makeBtn("🍭 Солодка вата  (-30🪙, сюрприз!)", 350, 490, 280, 34);
+        JButton candyBtn = makeBtn("🍭  Солодка вата  (-30🪙)", new Color(180, 60, 140));
+        candyBtn.setBounds(220, 4, 220, 38);
         candyBtn.addActionListener(e -> moveCharacter(CANDY_X, CANDY_Y, () -> buyCottonCandy(candyBtn)));
-        bg.add(candyBtn);
+        btnPanel.add(candyBtn);
 
-        // 3. Допомогти NPC (одноразово)
-        JButton npcBtn = makeBtn("🧑 Допомогти NPC  (+30-50🪙, +30XP)", 100, 530, 280, 34);
+        JButton npcBtn = makeBtn("🧑  Допомогти NPC  (+XP, +🪙)", new Color(60, 100, 160));
+        npcBtn.setBounds(450, 4, 220, 38);
         npcBtn.addActionListener(e -> moveCharacter(NPC_X, NPC_Y, () -> helpNpc(npcBtn)));
-        bg.add(npcBtn);
+        btnPanel.add(npcBtn);
 
         // 4. Фото біля фонтану
-        JButton photoBtn = makeBtn("📸 Фото  (+5XP)", 430, 530, 180, 34);
-        photoBtn.addActionListener(e -> moveCharacter(PHOTO_X, PHOTO_Y, () -> takePhoto()));
-        bg.add(photoBtn);
+        // photoBtn переміщено
+
 
         // ── NPC-підказка ─────────────────────────────────────────────────────
         JLabel hint = new JLabel(
                 "<html><i>Перехожий: «Спробуй купити сік або солодку вату — кожен раз сюрприз!»</i></html>",
                 SwingConstants.CENTER);
-        hint.setBounds(80, 570, 640, 22);
+        hint.setBounds(0, 624, 800, 22);
         hint.setForeground(new Color(200, 240, 200));
+        hint.setOpaque(true);
+        hint.setBackground(new Color(10, 40, 10, 190));
         hint.setFont(new Font("Arial", Font.ITALIC, 12));
         bg.add(hint);
 
@@ -164,12 +169,6 @@ public class ParkFrame extends JFrame {
         }
     }
 
-    private void takePhoto() {
-        gameState.addXp(5);
-        SaveManager.saveGame(gameState);
-        updateStats();
-        JOptionPane.showMessageDialog(this, "📸 Гарне фото на пам'ять!\n+5 XP");
-    }
 
     // ── Переміщення ──────────────────────────────────────────────────────
     private void moveCharacter(int tx, int ty, Runnable onArrival) {
@@ -194,13 +193,22 @@ public class ParkFrame extends JFrame {
     }
 
     // ── Допоміжні ─────────────────────────────────────────────────────────
-    private JButton makeBtn(String text, int x, int y, int w, int h) {
-        JButton b = new JButton(text);
-        b.setBounds(x, y, w, h);
-        b.setBackground(new Color(34, 120, 50));
+    private JButton makeBtn(String text, Color color) {
+        JButton b = new JButton(text) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? color.brighter() : color);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
         b.setForeground(Color.WHITE);
-        b.setFont(new Font("Arial", Font.BOLD, 12));
-        b.setFocusable(false);
+        b.setFont(new Font("Arial", Font.BOLD, 13));
+        b.setContentAreaFilled(false);
+        b.setBorderPainted(false);
+        b.setFocusPainted(false);
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return b;
     }

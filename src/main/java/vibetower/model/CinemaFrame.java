@@ -2,327 +2,385 @@ package vibetower.model;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.util.Random;
-import javax.swing.Timer;
 
 /**
  * CinemaFrame — Кінотеатр (з 5 рівня).
- * Два режими: перегляд фільму та робота працівником кінотеатру.
- * Фон: касса (lobby) + зал (hall) — вкладки.
+ * workMode=false → тільки перегляд фільмів (з MapFrame "Місця").
+ * workMode=true  → тільки робота (з MapFrame "Робота"), 2 дії кожного виду, потім завершити зміну.
  */
 public class CinemaFrame extends JFrame {
 
     private final GameState gameState;
+    private final boolean workMode;
     private final Random rnd = new Random();
 
     private JLabel statsLabel;
     private JLabel characterLabel;
     private Timer movementTimer;
 
-    // Стан роботи кінотеатру
-    private int ticketsSold    = 0;
-    private int popcornSold    = 0;
-    private int hallCleaned    = 0;
-    private JLabel workProgress; // Поле для оновлення прогресу роботи
+    // Лічильники роботи (макс 2 кожного)
+    private int ticketsSold = 0;
+    private int popcornGiven = 0;
+    private int hallCleaned = 0;
+    private int seatsHelped = 0;
+    private static final int MAX_PER_ACTION = 2;
 
-    // Фільми та вікторина
+    private JButton ticketBtn, popcornBtn, cleanBtn, seatBtn, finishBtn;
+    private JLabel workProgressLabel;
+
     private static final String[][] MOVIES = {
             {"🎭 Пригоди у місті",  "Весела комедія про міське життя та дружбу."},
-            {"🚀 Зорі та мрії",     "Фантастика про космічні подорожі та відкриття."},
-            {"🌸 Весна назавжди",   "Романтична драма про першу любов і сміливість."},
-            {"🐉 Легенда дракона",  "Фентезі-екшн із магією та давніми таємницями."}
+            {"🚀 Зорі та мрії",     "Фантастика про космічні подорожі."},
+            {"🌸 Весна назавжди",   "Романтична драма про першу любов."},
+            {"🐉 Легенда дракона",  "Фентезі з магією та пригодами."}
     };
     private static final String[][] QUIZ = {
-            {"Де відбуваються пригоди?",     "У місті","В лісі","На морі",         "0"},
-            {"Що знаходить герой у космосі?","Зорю","Планету","Ракету",             "0"},
-            {"Яка пора року у фільмі?",      "Весна","Зима","Осінь",               "0"},
-            {"Яка головна істота легенди?",  "Дракон","Фенікс","Єдиноріг",         "0"}
+            {"Де відбуваються пригоди?",     "У місті",  "В лісі",  "На морі",  "0"},
+            {"Що знаходить герой у космосі?","Зорю",     "Планету", "Ракету",   "0"},
+            {"Яка пора року у фільмі?",      "Весна",    "Зима",    "Осінь",    "0"},
+            {"Яка головна істота легенди?",  "Дракон",   "Фенікс",  "Єдиноріг", "0"}
     };
 
+    private static final Color TOP_BG      = new Color(18, 10, 42, 220);
+    private static final Color BTN_PURPLE  = new Color(80, 40, 140);
+    private static final Color BTN_GOLD    = new Color(160, 100, 20);
+    private static final Color BTN_TEAL    = new Color(20, 110, 130);
+    private static final Color BTN_RED     = new Color(160, 30, 30);
+    private static final Color BTN_GREEN   = new Color(30, 130, 60);
+    private static final Color BTN_GRAY    = new Color(60, 60, 80);
+
+    /** Конструктор для режиму "Місця" (тільки фільми) */
     public CinemaFrame(GameState gameState) {
+        this(gameState, false);
+    }
+
+    /** Конструктор з явним вибором режиму */
+    public CinemaFrame(GameState gameState, boolean workMode) {
         this.gameState = gameState;
+        this.workMode  = workMode;
 
         setTitle("VibeTower — Кінотеатр 🎬");
         setSize(800, 650);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setResizable(false);
 
-        // Використовуємо лобі (касса) як основний фон
         BackgroundPanel bg = new BackgroundPanel("src/main/resources/cinema_lobby.png");
         bg.setLayout(null);
         setContentPane(bg);
 
-        // ── Топ-панель ─────────────────────────────────────────────────────
+        // ── Топ-панель ────────────────────────────────────────────────────
         JPanel top = new JPanel(null);
-        top.setBounds(0, 0, 800, 50);
-        top.setBackground(new Color(20, 10, 50, 220));
+        top.setBounds(0, 0, 800, 55);
+        top.setBackground(TOP_BG);
         bg.add(top);
 
         statsLabel = new JLabel();
         statsLabel.setForeground(Color.WHITE);
-        statsLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        statsLabel.setBounds(10, 12, 540, 26);
+        statsLabel.setFont(new Font("Arial", Font.BOLD, 13));
+        statsLabel.setBounds(10, 14, 680, 26);
         top.add(statsLabel);
         updateStats();
 
-        JButton backBtn = new JButton("↩ На карту");
-        backBtn.setBounds(670, 10, 110, 30);
-        backBtn.setFocusable(false);
+        JButton backBtn = makeBtn("↩ На карту", BTN_GRAY);
+        backBtn.setBounds(672, 10, 116, 34);
         backBtn.addActionListener(e -> goToMap());
         top.add(backBtn);
 
-        // ── Персонаж ─────────────────────────────────────────────────────────
-        characterLabel = new JLabel("👤", SwingConstants.CENTER);
-        characterLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 35));
-        characterLabel.setBounds(380, 380, 50, 60);
+        // ── Персонаж ──────────────────────────────────────────────────────
+        characterLabel = new JLabel("🧑", SwingConstants.CENTER);
+        characterLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 36));
+        characterLabel.setBounds(350, 480, 50, 58);
         bg.add(characterLabel);
 
-        // ── NPC-підказка ─────────────────────────────────────────────────────
-        JLabel npc = new JLabel(
-                "<html><i>Касир: «Купи квиток і насолоджуйся фільмом, або попрацюй у кінотеатрі!»</i></html>",
-                SwingConstants.CENTER);
-        npc.setBounds(80, 575, 640, 22);
-        npc.setForeground(new Color(200, 180, 255));
-        npc.setFont(new Font("Arial", Font.ITALIC, 12));
-        bg.add(npc);
+        // ── NPC підказка ──────────────────────────────────────────────────
+        String hintText = workMode
+                ? "👔 Касир: «Виконуй кожну дію по 2 рази, потім завершуй зміну!»"
+                : "🎬 Касир: «Купи квиток і насолоджуйся фільмом!»";
+        JLabel hint = new JLabel(hintText, SwingConstants.CENTER);
+        hint.setBounds(0, 624, 800, 22);
+        hint.setForeground(new Color(200, 180, 255));
+        hint.setFont(new Font("Arial", Font.ITALIC, 12));
+        hint.setOpaque(true);
+        hint.setBackground(new Color(10, 5, 30, 190));
+        bg.add(hint);
 
-        // ──────── СЕКЦІЯ: ПЕРЕГЛЯД ФІЛЬМУ ─────────────────────────────────
-        JLabel movieTitle = new JLabel("─── Обери фільм та купи квиток ───", SwingConstants.CENTER);
-        movieTitle.setBounds(50, 55, 700, 24);
-        movieTitle.setForeground(new Color(180, 160, 255));
-        movieTitle.setFont(new Font("Arial", Font.BOLD, 14));
-        bg.add(movieTitle);
+        // ── Вміст залежно від режиму ──────────────────────────────────────
+        if (workMode) {
+            buildWorkUI(bg);
+        } else {
+            buildVisitUI(bg);
+        }
 
-        // Кнопки фільмів (2 + 2 в ряд)
+        // ── Клік по фону ──────────────────────────────────────────────────
+        bg.addMouseListener(new MouseAdapter() {
+            @Override public void mousePressed(MouseEvent e) {
+                if (e.getY() > 55 && e.getY() < 600) moveCharacter(e.getX()-25, e.getY()-30, null);
+            }
+        });
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  РЕЖИМ ВІДВІДУВАЧА — тільки фільми
+    // ════════════════════════════════════════════════════════════════════════
+    private void buildVisitUI(JPanel bg) {
+        JLabel title = new JLabel("── Оберіть фільм та купіть квиток ──", SwingConstants.CENTER);
+        title.setBounds(50, 62, 700, 26);
+        title.setForeground(new Color(200, 170, 255));
+        title.setFont(new Font("Arial", Font.BOLD, 15));
+        bg.add(title);
+
+        // 4 фільми по 2 в ряд
         for (int i = 0; i < MOVIES.length; i++) {
             final int idx = i;
             int row = i / 2, col = i % 2;
-            JButton movieBtn = makeBtn(MOVIES[i][0] + "  🎫 -50🪙", 80 + col * 330, 85 + row * 44, 310, 36);
-            movieBtn.addActionListener(e -> watchMovie(idx));
-            bg.add(movieBtn);
+            JButton btn = makeBtn(MOVIES[i][0] + "   🎫 -50🪙", BTN_PURPLE);
+            btn.setBounds(60 + col * 390, 98 + row * 54, 370, 44);
+            btn.addActionListener(e -> watchMovie(idx));
+            bg.add(btn);
         }
+    }
 
-        // Розділювач
-        JSeparator sep = new JSeparator();
-        sep.setBounds(50, 180, 700, 10);
-        bg.add(sep);
+    // ════════════════════════════════════════════════════════════════════════
+    //  РЕЖИМ РОБОТИ — 4 дії по 2 рази кожна
+    // ════════════════════════════════════════════════════════════════════════
+    private void buildWorkUI(JPanel bg) {
+        JLabel title = new JLabel("── Робота у кінотеатрі ──", SwingConstants.CENTER);
+        title.setBounds(50, 62, 700, 26);
+        title.setForeground(new Color(120, 210, 255));
+        title.setFont(new Font("Arial", Font.BOLD, 15));
+        bg.add(title);
 
-        // ──────── СЕКЦІЯ: РОБОТА У КІНОТЕАТРІ ─────────────────────────────
-        JLabel workTitle = new JLabel("─── Робота у кінотеатрі ───", SwingConstants.CENTER);
-        workTitle.setBounds(50, 192, 700, 24);
-        workTitle.setForeground(new Color(120, 210, 255));
-        workTitle.setFont(new Font("Arial", Font.BOLD, 14));
-        bg.add(workTitle);
+        // 4 кнопки дій 2×2
+        ticketBtn  = makeBtn("🎫  Продати квиток    (+20🪙 +15XP -5⚡)  [0/2]", BTN_TEAL);
+        popcornBtn = makeBtn("🍿  Видати попкорн    (+15🪙 +10XP -4⚡)  [0/2]", BTN_TEAL);
+        cleanBtn   = makeBtn("🧹  Прибрати зал      (+25🪙 +20XP -8⚡)  [0/2]", BTN_TEAL);
+        seatBtn    = makeBtn("🗺  Допомогти з місцем (+10XP ±🌟)         [0/2]", BTN_TEAL);
 
-        JButton ticketBtn = makeBtn("🎫 Продати квиток  (+20🪙 +15XP -5⚡)",  80, 225, 310, 36);
-        JButton popcornBtn= makeBtn("🍿 Видати попкорн  (+15🪙 +10XP -4⚡)",  420, 225, 310, 36);
-        JButton cleanBtn  = makeBtn("🧹 Прибрати зал    (+25🪙 +20XP -8⚡)",  80, 270, 310, 36);
-        JButton seatBtn   = makeBtn("🗺 Допомогти знайти місце  (+10XP ±🌟)", 420, 270, 310, 36);
+        ticketBtn.setBounds(30, 98, 360, 44);
+        popcornBtn.setBounds(410, 98, 360, 44);
+        cleanBtn.setBounds(30, 152, 360, 44);
+        seatBtn.setBounds(410, 152, 360, 44);
 
-        // Переміщення до точки каси, потім дія
-        ticketBtn.addActionListener(e -> moveCharacter(140, 370, () -> sellTicket(ticketBtn)));
-        popcornBtn.addActionListener(e -> moveCharacter(560, 320, () -> givePopcorn(popcornBtn)));
-        cleanBtn.addActionListener(e  -> moveToCinemaHall(() -> cleanHall(cleanBtn)));
-        seatBtn.addActionListener(e   -> moveCharacter(450, 400, () -> helpFindSeat()));
+        ticketBtn.addActionListener(e ->
+                moveCharacter(140, 370, () -> doWorkAction("ticket")));
+        popcornBtn.addActionListener(e ->
+                moveCharacter(560, 330, () -> doWorkAction("popcorn")));
+        cleanBtn.addActionListener(e ->
+                moveCharacter(380, 310, () -> doWorkAction("clean")));
+        seatBtn.addActionListener(e ->
+                moveCharacter(450, 410, () -> doWorkAction("seat")));
 
         bg.add(ticketBtn);
         bg.add(popcornBtn);
         bg.add(cleanBtn);
         bg.add(seatBtn);
 
-        // ── Інфо про прогрес роботи ──────────────────────────────────────────
-        workProgress = new JLabel("Робота: квитків 0 | попкорн 0 | прибрань 0", SwingConstants.CENTER);
-        workProgress.setBounds(50, 315, 700, 22);
-        workProgress.setForeground(new Color(180, 220, 255));
-        workProgress.setFont(new Font("Arial", Font.PLAIN, 12));
-        bg.add(workProgress);
+        // Прогрес роботи
+        workProgressLabel = new JLabel("", SwingConstants.CENTER);
+        workProgressLabel.setBounds(30, 206, 740, 22);
+        workProgressLabel.setForeground(new Color(180, 220, 255));
+        workProgressLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        bg.add(workProgressLabel);
+        updateWorkProgress();
 
-        // ── Клік по фону ─────────────────────────────────────────────────────
-        bg.addMouseListener(new MouseAdapter() {
-            @Override public void mousePressed(MouseEvent e) {
-                if (e.getY() > 55) moveCharacter(e.getX() - 25, e.getY() - 30, null);
-            }
-        });
+        // Кнопка завершення зміни
+        finishBtn = makeBtn("✅  Завершити зміну  (+80🪙 +60XP)", BTN_GREEN);
+        finishBtn.setBounds(220, 238, 360, 44);
+        finishBtn.setEnabled(false);
+        finishBtn.addActionListener(e -> finishWorkShift());
+        bg.add(finishBtn);
     }
 
-    // ── Перегляд фільму ───────────────────────────────────────────────────
-    private void watchMovie(int movieIdx) {
-        if (!gameState.spendSilver(50)) {
-            JOptionPane.showMessageDialog(this, "🪙 Недостатньо срібла! Квиток коштує 50.", "Нестача коштів", JOptionPane.WARNING_MESSAGE);
-            return;
+    // ── Дії роботи ────────────────────────────────────────────────────────
+    private void doWorkAction(String type) {
+        int energyCost; int silverGain; int xpGain; String msg;
+        int currentCount;
+
+        switch (type) {
+            case "ticket":
+                if (ticketsSold >= MAX_PER_ACTION) { showInfo("Вже продано максимум квитків за цю зміну!"); return; }
+                if (gameState.getEnergy() < 5) { showWarn("⚡ Замало енергії! Потрібно 5."); return; }
+                gameState.spendEnergy(5); gameState.addSilver(20); gameState.addXp(15);
+                ticketsSold++; msg = "🎫 Квиток продано!\n+20 🪙  +15 XP  -5 ⚡";
+                ticketBtn.setText("🎫  Продати квиток    (+20🪙 +15XP -5⚡)  [" + ticketsSold + "/2]");
+                if (ticketsSold >= MAX_PER_ACTION) ticketBtn.setEnabled(false);
+                break;
+            case "popcorn":
+                if (popcornGiven >= MAX_PER_ACTION) { showInfo("Вже видано максимум попкорну!"); return; }
+                if (gameState.getEnergy() < 4) { showWarn("⚡ Замало енергії! Потрібно 4."); return; }
+                gameState.spendEnergy(4); gameState.addSilver(15); gameState.addXp(10);
+                popcornGiven++; msg = "🍿 Попкорн видано!\n+15 🪙  +10 XP  -4 ⚡";
+                popcornBtn.setText("🍿  Видати попкорн    (+15🪙 +10XP -4⚡)  [" + popcornGiven + "/2]");
+                if (popcornGiven >= MAX_PER_ACTION) popcornBtn.setEnabled(false);
+                break;
+            case "clean":
+                if (hallCleaned >= MAX_PER_ACTION) { showInfo("Зал вже прибрано максимум разів!"); return; }
+                if (gameState.getEnergy() < 8) { showWarn("⚡ Замало енергії! Потрібно 8."); return; }
+                gameState.spendEnergy(8); gameState.addSilver(25); gameState.addXp(20);
+                hallCleaned++; msg = "🧹 Зал прибрано!\n+25 🪙  +20 XP  -8 ⚡";
+                cleanBtn.setText("🧹  Прибрати зал      (+25🪙 +20XP -8⚡)  [" + hallCleaned + "/2]");
+                if (hallCleaned >= MAX_PER_ACTION) cleanBtn.setEnabled(false);
+                break;
+            default: // seat
+                if (seatsHelped >= MAX_PER_ACTION) { showInfo("Вже допомогли максимуму глядачів!"); return; }
+                gameState.addXp(10);
+                boolean gotGold = rnd.nextInt(100) < 30;
+                if (gotGold) gameState.addGold(1);
+                seatsHelped++;
+                msg = "🗺 Глядач знайшов місце!\n+10 XP" + (gotGold ? "\n🎉 +1 🌟" : "");
+                seatBtn.setText("🗺  Допомогти з місцем (+10XP ±🌟)         [" + seatsHelped + "/2]");
+                if (seatsHelped >= MAX_PER_ACTION) seatBtn.setEnabled(false);
+                break;
         }
-        // Попкорн за бажанням
+
+        SaveManager.saveGame(gameState);
+        updateStats();
+        updateWorkProgress();
+        showInfo(msg);
+
+        // Якщо всі дії виконані — активуємо кнопку завершення
+        if (ticketsSold >= MAX_PER_ACTION && popcornGiven >= MAX_PER_ACTION &&
+                hallCleaned >= MAX_PER_ACTION && seatsHelped >= MAX_PER_ACTION) {
+            finishBtn.setEnabled(true);
+            finishBtn.setBackground(BTN_GREEN);
+            JOptionPane.showMessageDialog(this, "🎉 Всі завдання виконано! Можеш завершити зміну.");
+        }
+    }
+
+    private void finishWorkShift() {
+        gameState.addSilver(80); gameState.addXp(60);
+        SaveManager.saveGame(gameState);
+        updateStats();
+        JOptionPane.showMessageDialog(this, "💼 Зміну завершено!\n+80 🪙  +60 XP\nДякуємо за роботу!");
+        goToMap();
+    }
+
+    private void updateWorkProgress() {
+        if (workProgressLabel == null) return;
+        workProgressLabel.setText(String.format(
+                "Квитків: %d/2  |  Попкорн: %d/2  |  Прибрань: %d/2  |  Місця: %d/2",
+                ticketsSold, popcornGiven, hallCleaned, seatsHelped));
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  ПЕРЕГЛЯД ФІЛЬМУ
+    // ════════════════════════════════════════════════════════════════════════
+    private void watchMovie(int idx) {
+        if (!gameState.spendSilver(50)) {
+            showWarn("🪙 Недостатньо срібла! Квиток коштує 50."); return;
+        }
         int opt = JOptionPane.showConfirmDialog(this,
                 "Взяти попкорн 🍿 за 20 срібла?", "Попкорн", JOptionPane.YES_NO_OPTION);
-        if (opt == JOptionPane.YES_OPTION) {
-            if (!gameState.spendSilver(20))
-                JOptionPane.showMessageDialog(this, "Не вистачає на попкорн, дивимось без нього.");
+        if (opt == JOptionPane.YES_OPTION && !gameState.spendSilver(20)) {
+            JOptionPane.showMessageDialog(this, "Не вистачає на попкорн, дивимось без нього.");
         }
-
-        // Відкрити вікно залу
-        showCinemaHall(movieIdx);
+        showCinemaHall(idx);
     }
 
-    private void showCinemaHall(int movieIdx) {
-        // Окремий екран залу
-        JDialog hallDialog = new JDialog(this, "🎬 " + MOVIES[movieIdx][0], true);
-        hallDialog.setSize(800, 580);
-        hallDialog.setLocationRelativeTo(this);
+    private void showCinemaHall(int idx) {
+        JDialog hall = new JDialog(this, "🎬 " + MOVIES[idx][0], true);
+        hall.setSize(800, 580);
+        hall.setLocationRelativeTo(this);
 
         CinemaHallPanel hallBg = new CinemaHallPanel("src/main/resources/cinema_hall.png");
         hallBg.setLayout(null);
-        hallDialog.setContentPane(hallBg);
+        hall.setContentPane(hallBg);
 
-        JLabel filmInfo = new JLabel("<html><center><b>" + MOVIES[movieIdx][0] + "</b><br>"
-                + MOVIES[movieIdx][1] + "</center></html>", SwingConstants.CENTER);
-        filmInfo.setBounds(100, 30, 600, 60);
-        filmInfo.setForeground(Color.WHITE);
-        filmInfo.setFont(new Font("Arial", Font.PLAIN, 14));
-        hallBg.add(filmInfo);
+        JLabel info = new JLabel("<html><center><b style='color:white;font-size:16px'>"
+                + MOVIES[idx][0] + "</b><br><span style='color:#ccc'>" + MOVIES[idx][1] + "</span></center></html>",
+                SwingConstants.CENTER);
+        info.setBounds(100, 30, 600, 70);
+        hallBg.add(info);
 
-        JButton watchBtn = new JButton("▶ Переглянути фільм");
-        watchBtn.setBounds(280, 490, 240, 40);
-        watchBtn.setBackground(new Color(160, 60, 20));
-        watchBtn.setForeground(Color.WHITE);
-        watchBtn.setFont(new Font("Arial", Font.BOLD, 14));
-        watchBtn.addActionListener(e -> {
-            hallDialog.dispose();
-            finishWatchingMovie(movieIdx);
-        });
+        JButton watchBtn = makeBtn("▶  Переглянути фільм", new Color(160, 60, 20));
+        watchBtn.setBounds(280, 490, 240, 44);
+        watchBtn.addActionListener(e -> { hall.dispose(); finishMovie(idx); });
         hallBg.add(watchBtn);
 
-        hallDialog.setVisible(true);
+        hall.setVisible(true);
     }
 
-    private void finishWatchingMovie(int movieIdx) {
-        gameState.addEnergy(10);
-        gameState.addXp(30);
+    private void finishMovie(int idx) {
+        gameState.addEnergy(10); gameState.addXp(30);
         SaveManager.saveGame(gameState);
         updateStats();
-        JOptionPane.showMessageDialog(this,
-                "🎬 Фільм переглянуто!\n+10 ⚡  +30 XP");
+        JOptionPane.showMessageDialog(this, "🎬 Фільм переглянуто!\n+10 ⚡  +30 XP");
 
-        // Вікторина
-        String[] q = QUIZ[movieIdx];
-        String[] answers = {q[1], q[2], q[3]};
+        String[] q = QUIZ[idx];
+        String[] ans = {q[1], q[2], q[3]};
         int correct = Integer.parseInt(q[4]);
         int choice = JOptionPane.showOptionDialog(this,
                 "❓ Питання по фільму:\n" + q[0],
                 "Вікторина", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
-                null, answers, answers[0]);
+                null, ans, ans[0]);
         if (choice == correct) {
-            gameState.addSilver(30);
-            gameState.addXp(20);
-            SaveManager.saveGame(gameState);
-            updateStats();
-            JOptionPane.showMessageDialog(this, "✅ Правильно!\n+30 🪙  +20 XP");
+            gameState.addSilver(30); gameState.addXp(20);
+            SaveManager.saveGame(gameState); updateStats();
+            showInfo("✅ Правильно!\n+30 🪙  +20 XP");
         } else if (choice >= 0) {
-            JOptionPane.showMessageDialog(this, "❌ Неправильно. Правильна відповідь: " + answers[correct]);
+            showInfo("❌ Неправильно. Правильна відповідь: " + ans[correct]);
         }
     }
 
-    // ── Робота у кінотеатрі ───────────────────────────────────────────────
-    private void sellTicket(JButton btn) {
-        if (gameState.getEnergy() < 5) { showWarn("⚡ Замало енергії!"); return; }
-        gameState.spendEnergy(5);
-        gameState.addSilver(20);
-        gameState.addXp(15);
-        ticketsSold++;
-        SaveManager.saveGame(gameState);
-        updateStats();
-        if (workProgress != null) workProgress.setText(String.format("Квитків: %d  |  Попкорн: %d  |  Прибрань: %d", ticketsSold, popcornSold, hallCleaned));
-
-        JOptionPane.showMessageDialog(this, "🎫 Квиток продано!\n+20 🪙  +15 XP  -5 ⚡\nПродано квитків: " + ticketsSold);
-    }
-
-    private void givePopcorn(JButton btn) {
-        if (gameState.getEnergy() < 4) { showWarn("⚡ Замало енергії!"); return; }
-        gameState.spendEnergy(4);
-        gameState.addSilver(15);
-        gameState.addXp(10);
-        popcornSold++;
-        SaveManager.saveGame(gameState);
-        updateStats();
-        if (workProgress != null) workProgress.setText(String.format("Квитків: %d  |  Попкорн: %d  |  Прибрань: %d", ticketsSold, popcornSold, hallCleaned));
-
-        JOptionPane.showMessageDialog(this, "🍿 Попкорн видано!\n+15 🪙  +10 XP  -4 ⚡");
-    }
-
-    private void moveToCinemaHall(Runnable action) {
-        moveCharacter(380, 300, action);
-    }
-
-    private void cleanHall(JButton btn) {
-        if (gameState.getEnergy() < 8) { showWarn("⚡ Замало енергії! Потрібно 8."); return; }
-        gameState.spendEnergy(8);
-        gameState.addSilver(25);
-        gameState.addXp(20);
-        hallCleaned++;
-        SaveManager.saveGame(gameState);
-        updateStats();
-        if (workProgress != null) workProgress.setText(String.format("Квитків: %d  |  Попкорн: %d  |  Прибрань: %d", ticketsSold, popcornSold, hallCleaned));
-
-        JOptionPane.showMessageDialog(this, "🧹 Зал прибрано!\n+25 🪙  +20 XP  -8 ⚡\nПрибрань виконано: " + hallCleaned);
-    }
-
-    private void helpFindSeat() {
-        gameState.addXp(10);
-        boolean gotGold = rnd.nextInt(100) < 30;
-        if (gotGold) gameState.addGold(1);
-        SaveManager.saveGame(gameState);
-        updateStats();
-        String msg = "🗺 Глядач знайшов місце!\n+10 XP";
-        if (gotGold) msg += "\n🎉 Щедрий глядач подарував: +1 🌟";
-        JOptionPane.showMessageDialog(this, msg);
-    }
-
-    // ── Переміщення ──────────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════════════════
+    //  ПЕРЕМІЩЕННЯ
+    // ════════════════════════════════════════════════════════════════════════
     private void moveCharacter(int tx, int ty, Runnable onArrival) {
         if (movementTimer != null && movementTimer.isRunning()) movementTimer.stop();
         movementTimer = new Timer(15, null);
         movementTimer.addActionListener(e -> {
             int cx = characterLabel.getX(), cy = characterLabel.getY();
-            int nx = approach(cx, tx, 4);
-            int ny = approach(cy, ty, 4);
+            int nx = approach(cx, tx, 4), ny = approach(cy, ty, 4);
+            if (ny < 56) ny = 56;
             characterLabel.setLocation(nx, ny);
-            if (nx == tx && ny == ty) {
-                movementTimer.stop();
-                if (onArrival != null) onArrival.run();
-            }
+            if (nx == tx && ny == ty) { movementTimer.stop(); if (onArrival != null) onArrival.run(); }
         });
         movementTimer.start();
     }
 
     private int approach(int c, int t, int s) {
-        if (Math.abs(c - t) <= s) return t;
+        if (Math.abs(c-t) <= s) return t;
         return c + (c < t ? s : -s);
     }
 
-    private JButton makeBtn(String text, int x, int y, int w, int h) {
-        JButton b = new JButton(text);
-        b.setBounds(x, y, w, h);
-        b.setBackground(new Color(60, 40, 100));
-        b.setForeground(Color.WHITE);
-        b.setFont(new Font("Arial", Font.BOLD, 12));
-        b.setFocusable(false);
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return b;
-    }
-
+    // ════════════════════════════════════════════════════════════════════════
+    //  ДОПОМІЖНІ
+    // ════════════════════════════════════════════════════════════════════════
     private void updateStats() {
-        statsLabel.setText(String.format(
-                "⚡ %d/100  |  🪙 %d  |  🌟 %d  |  XP: %d",
-                gameState.getEnergy(), gameState.getSilver(), gameState.getGold(), gameState.getXp()
-        ));
+        statsLabel.setText(String.format("⚡ %d/100  |  🪙 %d  |  🌟 %d  |  XP: %d",
+                gameState.getEnergy(), gameState.getSilver(), gameState.getGold(), gameState.getXp()));
     }
 
-    private void showWarn(String msg) {
-        JOptionPane.showMessageDialog(this, msg, "Увага", JOptionPane.WARNING_MESSAGE);
+    private JButton makeBtn(String text, Color color) {
+        JButton btn = new JButton(text) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                Color c = isEnabled() ? (getModel().isRollover() ? color.brighter() : color)
+                        : new Color(50, 50, 60);
+                g2.setColor(c);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("Arial", Font.BOLD, 13));
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return btn;
     }
+
+    private void showInfo(String msg) { JOptionPane.showMessageDialog(this, msg); }
+    private void showWarn(String msg) { JOptionPane.showMessageDialog(this, msg, "Увага", JOptionPane.WARNING_MESSAGE); }
 
     private void goToMap() {
         if (movementTimer != null) movementTimer.stop();
@@ -331,7 +389,6 @@ public class CinemaFrame extends JFrame {
         dispose();
     }
 
-    // ── Фони ────────────────────────────────────────────────────────────
     static class BackgroundPanel extends JPanel {
         private Image img;
         BackgroundPanel(String path) {
@@ -341,7 +398,7 @@ public class CinemaFrame extends JFrame {
         @Override protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             if (img != null) g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
-            else { g.setColor(new Color(20,10,40)); g.fillRect(0,0,getWidth(),getHeight()); }
+            else { g.setColor(new Color(18,10,40)); g.fillRect(0,0,getWidth(),getHeight()); }
         }
     }
 
@@ -354,8 +411,7 @@ public class CinemaFrame extends JFrame {
         @Override protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             if (img != null) g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
-            else { g.setColor(new Color(20,10,40)); g.fillRect(0,0,getWidth(),getHeight()); }
+            else { g.setColor(new Color(18,10,40)); g.fillRect(0,0,getWidth(),getHeight()); }
         }
     }
 }
-

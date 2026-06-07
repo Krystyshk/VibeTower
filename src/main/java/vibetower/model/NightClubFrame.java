@@ -80,18 +80,21 @@ public class NightClubFrame extends JFrame {
         bg.add(characterLabel);
 
         // ── Кнопка «Коктейль» (біля бару) ───────────────────────────────
-        JButton cocktailBtn = makeActionButton("🍹 Коктейль (-15🪙  +5⚡  +10XP)", 420, 500, 280, 36);
-        cocktailBtn.addActionListener(e -> {
-            moveCharacter(BAR_X, BAR_Y, () -> drinkCocktail(cocktailBtn));
-        });
-        bg.add(cocktailBtn);
+        // ── Нижня панель кнопок ──────────────────────────────────────────
+        JPanel btnPanel = new JPanel(null);
+        btnPanel.setBounds(0, 578, 800, 46);
+        btnPanel.setBackground(new Color(20, 10, 50, 210));
+        bg.add(btnPanel);
 
-        // ── Кнопка «Танцювати» ───────────────────────────────────────────
-        JButton danceBtn = makeActionButton("🕺 Танцювати  (-8⚡  +15XP)", 100, 500, 250, 36);
-        danceBtn.addActionListener(e -> {
-            moveCharacter(DANCE_X, DANCE_Y, () -> dance(danceBtn));
-        });
-        bg.add(danceBtn);
+        JButton cocktailBtn = makeActionButton("🍹  Коктейль  (-15🪙  +5⚡  +10XP)");
+        cocktailBtn.setBounds(80, 4, 300, 38);
+        cocktailBtn.addActionListener(e -> moveCharacter(BAR_X, BAR_Y, () -> drinkCocktail(cocktailBtn)));
+        btnPanel.add(cocktailBtn);
+
+        JButton danceBtn = makeActionButton("🕺  Танцювати  (-8⚡  +15XP)");
+        danceBtn.setBounds(420, 4, 300, 38);
+        danceBtn.addActionListener(e -> moveCharacter(DANCE_X, DANCE_Y, () -> dance(danceBtn)));
+        btnPanel.add(danceBtn);
 
         // ── NPC-підказка ─────────────────────────────────────────────────
         JLabel npcHint = makeHintLabel(
@@ -172,12 +175,27 @@ public class NightClubFrame extends JFrame {
 
     // ── Допоміжні методи ──────────────────────────────────────────────────
     private JButton makeActionButton(String text, int x, int y, int w, int h) {
-        JButton btn = new JButton(text);
+        JButton btn = makeActionButton(text);
         btn.setBounds(x, y, w, h);
-        btn.setBackground(new Color(100, 30, 160));
+        return btn;
+    }
+
+    private JButton makeActionButton(String text) {
+        JButton btn = new JButton(text) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isRollover() ? new Color(130, 50, 200) : new Color(100, 30, 160));
+                g2.fillRoundRect(0,0,getWidth(),getHeight(),12,12);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
         btn.setForeground(Color.WHITE);
         btn.setFont(new Font("Arial", Font.BOLD, 13));
-        btn.setFocusable(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return btn;
     }
@@ -220,6 +238,5 @@ public class NightClubFrame extends JFrame {
         }
     }
 
-    // ── spendSilver helper (GameState не має) ─────────────────────────────
 }
 

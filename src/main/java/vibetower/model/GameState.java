@@ -14,6 +14,7 @@ public class GameState implements Serializable {
     private int energy;
 
     private long cafeCooldownEndTime;
+    private long shellCooldownEndTime; // Кулдаун мушель (1 година)
 
     private ArrayList<Item> inventory;
     private ArrayList<Item> placedItems;
@@ -70,6 +71,9 @@ public class GameState implements Serializable {
     public void setCafeCooldownEndTime(long cafeCooldownEndTime) {
         this.cafeCooldownEndTime = cafeCooldownEndTime;
     }
+
+    public long getShellCooldownEndTime() { return shellCooldownEndTime; }
+    public void setShellCooldownEndTime(long t) { this.shellCooldownEndTime = t; }
 
     public boolean buyItem(Item item) {
         if (silver >= item.getPrice()) {

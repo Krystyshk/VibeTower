@@ -1,6 +1,5 @@
 package vibetower.model;
 
-import vibetower.ui.InventoryFrame;
 import vibetower.ui.RepairFrame;
 import vibetower.ui.ShopFrame;
 import vibetower.ui.TasksFrame;
@@ -14,6 +13,7 @@ public class HomeFrame extends JFrame {
 
     private final GameState gameState;
 
+    private JLayeredPane layeredPane;
     private JLabel backgroundLabel;
     private String currentBackgroundPath;
     private double zoomScale = 1.0;
@@ -22,6 +22,9 @@ public class HomeFrame extends JFrame {
     private JLabel energyValueLabel;
     private JLabel silverValueLabel;
     private JLabel goldValueLabel;
+    private JLabel comfortLabel;
+
+    private JPanel inventoryPanel;
 
     private static final int WINDOW_WIDTH = 1200;
     private static final int WINDOW_HEIGHT = 720;
@@ -36,7 +39,7 @@ public class HomeFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
 
-        JLayeredPane layeredPane = new JLayeredPane();
+        layeredPane = new JLayeredPane();
         layeredPane.setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
         setContentPane(layeredPane);
 
@@ -44,10 +47,10 @@ public class HomeFrame extends JFrame {
         backgroundLabel.setBounds(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
         layeredPane.add(backgroundLabel, Integer.valueOf(0));
 
-        addTopInfo(layeredPane);
-        addLeftButtons(layeredPane);
-        addRightButtons(layeredPane);
-        addBottomButtons(layeredPane);
+        addTopInfo();
+        addLeftButtons();
+        addRightButtons();
+        addBottomButtons();
 
         updateTopInfo();
     }
@@ -122,18 +125,13 @@ public class HomeFrame extends JFrame {
         }
     }
 
-    private void addTopInfo(JLayeredPane layeredPane) {
+    private void addTopInfo() {
         JPanel topPanel = new JPanel(null);
         topPanel.setBounds(0, 0, WINDOW_WIDTH, 80);
         topPanel.setOpaque(false);
         layeredPane.add(topPanel, Integer.valueOf(5));
 
-        // Велика корона зліва
-        JLabel crownIcon = createIconLabel(
-                70,
-                58,
-                "src/main/resources/crown.png"
-        );
+        JLabel crownIcon = createIconLabel(70, 58, "src/main/resources/crown.png");
         crownIcon.setBounds(20, 10, 70, 58);
         topPanel.add(crownIcon);
 
@@ -143,13 +141,12 @@ public class HomeFrame extends JFrame {
         titleLabel.setForeground(Color.WHITE);
         topPanel.add(titleLabel);
 
-        JLabel comfortLabel = new JLabel("Комфорт: 0 ⭐");
+        comfortLabel = new JLabel("Комфорт: 0 ⭐");
         comfortLabel.setBounds(95, 38, 220, 24);
         comfortLabel.setFont(new Font("Arial", Font.BOLD, 18));
         comfortLabel.setForeground(Color.WHITE);
         topPanel.add(comfortLabel);
 
-        // Верхні показники посунуті вправо
         DiamondBadge levelBadge = new DiamondBadge(String.valueOf(gameState.getLevel()));
         levelBadge.setBounds(640, 9, 48, 48);
         topPanel.add(levelBadge);
@@ -178,11 +175,7 @@ public class HomeFrame extends JFrame {
         energyValueLabel.setBounds(905, 15, 55, 28);
         topPanel.add(energyValueLabel);
 
-        JLabel silverIcon = createIconLabel(
-                28,
-                28,
-                "src/main/resources/serebro.png"
-        );
+        JLabel silverIcon = createIconLabel(28, 28, "src/main/resources/serebro.png");
         silverIcon.setBounds(975, 15, 28, 28);
         topPanel.add(silverIcon);
 
@@ -191,11 +184,7 @@ public class HomeFrame extends JFrame {
         silverValueLabel.setBounds(1010, 15, 70, 28);
         topPanel.add(silverValueLabel);
 
-        JLabel goldIcon = createIconLabel(
-                28,
-                28,
-                "src/main/resources/zoloto.png"
-        );
+        JLabel goldIcon = createIconLabel(28, 28, "src/main/resources/zoloto.png");
         goldIcon.setBounds(1090, 15, 28, 28);
         topPanel.add(goldIcon);
 
@@ -205,7 +194,7 @@ public class HomeFrame extends JFrame {
         topPanel.add(goldValueLabel);
     }
 
-    private void addLeftButtons(JLayeredPane layeredPane) {
+    private void addLeftButtons() {
         int x = 18;
         int startY = 255;
         int gap = 16;
@@ -253,7 +242,7 @@ public class HomeFrame extends JFrame {
         });
     }
 
-    private void addRightButtons(JLayeredPane layeredPane) {
+    private void addRightButtons() {
         int buttonSize = 62;
         int x = WINDOW_WIDTH - buttonSize - 14;
         int startY = 240;
@@ -287,20 +276,15 @@ public class HomeFrame extends JFrame {
         layeredPane.add(editButton, Integer.valueOf(6));
 
         zoomPlusButton.addActionListener(e -> zoomInRoom());
-
         zoomMinusButton.addActionListener(e -> zoomOutRoom());
 
-        editButton.addActionListener(e -> {
-            new RepairFrame(gameState).setVisible(true);
-            dispose();
-        });
+        editButton.addActionListener(e -> openRepairFrameAndCheckTask());
     }
 
-    private void addBottomButtons(JLayeredPane layeredPane) {
+    private void addBottomButtons() {
         RoundedPanel bottomPanel = new RoundedPanel(22, new Color(125, 95, 65, 150));
         bottomPanel.setLayout(null);
 
-        // Коричневый блок стал меньше и аккуратнее
         bottomPanel.setBounds(270, 595, 660, 80);
         bottomPanel.setOpaque(false);
         layeredPane.add(bottomPanel, Integer.valueOf(5));
@@ -308,8 +292,6 @@ public class HomeFrame extends JFrame {
         int buttonWidth = 200;
         int buttonHeight = 66;
         int gap = 18;
-
-        // Все кнопки на одной высоте
         int y = 7;
 
         JButton shopButton = createImageButton(
@@ -344,15 +326,174 @@ public class HomeFrame extends JFrame {
             dispose();
         });
 
-        inventoryButton.addActionListener(e -> {
-            new InventoryFrame(gameState).setVisible(true);
-            dispose();
+        inventoryButton.addActionListener(e -> showInventoryPanel());
+
+        repairButton.addActionListener(e -> openRepairFrameAndCheckTask());
+    }
+
+    private void openRepairFrameAndCheckTask() {
+        checkTaskCompletion("start_repair");
+
+        new RepairFrame(gameState).setVisible(true);
+        dispose();
+    }
+
+    private void showInventoryPanel() {
+        if (inventoryPanel != null) {
+            layeredPane.remove(inventoryPanel);
+            inventoryPanel = null;
+            layeredPane.repaint();
+            return;
+        }
+
+        inventoryPanel = new JPanel(null);
+        inventoryPanel.setBounds(250, 120, 700, 430);
+        inventoryPanel.setBackground(new Color(252, 248, 240));
+        inventoryPanel.setBorder(BorderFactory.createLineBorder(new Color(120, 82, 160), 4));
+
+        JLabel title = new JLabel("Інвентар", SwingConstants.CENTER);
+        title.setBounds(0, 15, 700, 40);
+        title.setFont(new Font("Arial", Font.BOLD, 30));
+        title.setForeground(new Color(72, 37, 120));
+        inventoryPanel.add(title);
+
+        JButton closeButton = createFallbackButton("X");
+        closeButton.setBounds(640, 15, 45, 35);
+        inventoryPanel.add(closeButton);
+
+        closeButton.addActionListener(e -> {
+            layeredPane.remove(inventoryPanel);
+            inventoryPanel = null;
+            layeredPane.repaint();
         });
 
-        repairButton.addActionListener(e -> {
-            new RepairFrame(gameState).setVisible(true);
-            dispose();
+        JPanel itemsPanel = new JPanel(new GridLayout(0, 3, 12, 12));
+        itemsPanel.setBackground(new Color(252, 248, 240));
+
+        JScrollPane scrollPane = new JScrollPane(itemsPanel);
+        scrollPane.setBounds(25, 75, 650, 330);
+        scrollPane.setBorder(null);
+        scrollPane.getViewport().setBackground(new Color(252, 248, 240));
+        inventoryPanel.add(scrollPane);
+
+        if (gameState.getInventory().isEmpty()) {
+            JLabel empty = new JLabel("Інвентар порожній", SwingConstants.CENTER);
+            empty.setFont(new Font("Arial", Font.BOLD, 22));
+            empty.setForeground(new Color(120, 82, 160));
+            itemsPanel.add(empty);
+        } else {
+            for (Item item : gameState.getInventory()) {
+                itemsPanel.add(createInventoryCard(item));
+            }
+        }
+
+        layeredPane.add(inventoryPanel, Integer.valueOf(10));
+        layeredPane.revalidate();
+        layeredPane.repaint();
+    }
+
+    private JPanel createInventoryCard(Item item) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createLineBorder(new Color(120, 82, 160), 2));
+
+        JLabel icon = new JLabel(item.getIcon(), SwingConstants.CENTER);
+        icon.setFont(new Font("Arial", Font.BOLD, 36));
+        card.add(icon, BorderLayout.CENTER);
+
+        JLabel name = new JLabel(item.getName(), SwingConstants.CENTER);
+        name.setFont(new Font("Arial", Font.BOLD, 14));
+        name.setForeground(new Color(72, 37, 120));
+        card.add(name, BorderLayout.NORTH);
+
+        JButton placeButton = createFallbackButton("Поставити");
+        placeButton.setFont(new Font("Arial", Font.BOLD, 12));
+
+        placeButton.addActionListener(e -> {
+            gameState.placeItem(item);
+            SaveManager.saveGame(gameState);
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    item.getName() + " додано у кімнату.\nЩоб переміщувати предмет, відкрий режим ремонту.",
+                    "Інвентар",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+
+            checkTaskCompletion("place_item");
+            updateTopInfo();
         });
+
+        card.add(placeButton, BorderLayout.SOUTH);
+
+        return card;
+    }
+
+    private void checkTaskCompletion(String taskId) {
+        Task task = null;
+
+        if ("clean_apartment".equals(taskId)) {
+            task = new Task(
+                    "clean_apartment",
+                    "Прибрати квартиру",
+                    "Прибирання квартири завершено.",
+                    1,
+                    0,
+                    20,
+                    50,
+                    0
+            );
+        } else if ("rest_home".equals(taskId)) {
+            task = new Task(
+                    "rest_home",
+                    "Відновити енергію вдома",
+                    "Відпочинок завершено.",
+                    1,
+                    0,
+                    30,
+                    30,
+                    0
+            );
+        } else if ("start_repair".equals(taskId)) {
+            task = new Task(
+                    "start_repair",
+                    "Увійти в режим ремонту",
+                    "Режим ремонту відкрито.",
+                    3,
+                    5,
+                    80,
+                    80,
+                    0
+            );
+        } else if ("place_item".equals(taskId)) {
+            task = new Task(
+                    "place_item",
+                    "Поставити предмет у кімнату",
+                    "Предмет поставлено у кімнату.",
+                    4,
+                    5,
+                    120,
+                    120,
+                    0
+            );
+        }
+
+        if (task == null) {
+            return;
+        }
+
+        String result = gameState.finishActiveTask(task);
+
+        if (result != null && !result.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    result,
+                    "Нагорода",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+
+            updateTopInfo();
+        }
     }
 
     private JButton createImageButton(int width, int height, String fallbackText, String... imagePaths) {
@@ -449,6 +590,7 @@ public class HomeFrame extends JFrame {
     }
 
     private void updateTopInfo() {
+        comfortLabel.setText("Комфорт: " + gameState.getComfort() + " ⭐");
         xpValueLabel.setText(gameState.getExperience() + "/" + gameState.getExperienceToNextLevel());
         energyValueLabel.setText(String.valueOf(gameState.getEnergy()));
         silverValueLabel.setText(String.valueOf(gameState.getSilver()));
@@ -458,6 +600,9 @@ public class HomeFrame extends JFrame {
     private void restPlayer() {
         if (gameState.getEnergy() >= 100) {
             JOptionPane.showMessageDialog(this, "Енергія вже повна!");
+            checkTaskCompletion("clean_apartment");
+            checkTaskCompletion("rest_home");
+            updateTopInfo();
             return;
         }
 
@@ -465,6 +610,9 @@ public class HomeFrame extends JFrame {
         updateTopInfo();
 
         JOptionPane.showMessageDialog(this, "Ти відпочила. Енергія відновлена!");
+
+        checkTaskCompletion("clean_apartment");
+        checkTaskCompletion("rest_home");
     }
 
     private static class DiamondBadge extends JPanel {

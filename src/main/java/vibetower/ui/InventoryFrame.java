@@ -1,6 +1,7 @@
 package vibetower.ui;
 
 import vibetower.model.GameState;
+import vibetower.model.HomeFrame;
 import vibetower.model.Item;
 
 import javax.swing.*;
@@ -17,7 +18,7 @@ public class InventoryFrame extends JFrame {
         this.gameState.fixAfterLoad();
 
         setTitle("VibeTower — Інвентар");
-        setSize(900, 640);
+        setSize(1000, 680);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -29,22 +30,48 @@ public class InventoryFrame extends JFrame {
         topPanel.setOpaque(false);
         topPanel.setBorder(BorderFactory.createEmptyBorder(18, 25, 10, 25));
 
+        JButton homeButton = createSmallButton("🏠 Додому");
+        homeButton.setPreferredSize(new Dimension(150, 42));
+        homeButton.addActionListener(e -> {
+            new HomeFrame(gameState).setVisible(true);
+            dispose();
+        });
+
         JLabel titleLabel = new JLabel("Інвентар", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 36));
         titleLabel.setForeground(new Color(72, 37, 120));
 
+        topPanel.add(homeButton, BorderLayout.WEST);
         topPanel.add(titleLabel, BorderLayout.CENTER);
         topPanel.add(new CurrencyPanel(gameState), BorderLayout.EAST);
+
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
         JPanel tabs = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         tabs.setOpaque(false);
-        String[] categories = {"Усе", "Меблі", "Санвузол", "Спальня", "Кухня", "Техніка", "Декор", "Преміум", "Їжа"};
+
+        String[] categories = {
+                "Усе",
+                "Дивани",
+                "Стільці",
+                "Ліжка",
+                "Шафи",
+                "Столи",
+                "Техніка",
+                "Освітлення",
+                "Декор",
+                "Рослини",
+                "Санвузол",
+                "Кухня",
+                "Їжа"
+        };
+
         for (String category : categories) {
             JButton button = createSmallButton(category);
             button.addActionListener(e -> showItems(category));
             tabs.add(button);
         }
+
         mainPanel.add(tabs, BorderLayout.BEFORE_FIRST_LINE);
 
         itemsPanel = new JPanel(new GridLayout(0, 3, 18, 18));
@@ -54,9 +81,11 @@ public class InventoryFrame extends JFrame {
         JScrollPane scrollPane = new JScrollPane(itemsPanel);
         scrollPane.setBorder(null);
         scrollPane.getViewport().setBackground(new Color(252, 248, 240));
+
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         add(mainPanel, BorderLayout.CENTER);
+
         showItems("Усе");
     }
 
@@ -97,29 +126,47 @@ public class InventoryFrame extends JFrame {
         ));
 
         JLabel iconLabel = new JLabel(item.getIcon(), SwingConstants.CENTER);
-        iconLabel.setFont(new Font("Arial", Font.BOLD, 44));
+        iconLabel.setFont(new Font("Arial", Font.BOLD, 48));
         iconLabel.setForeground(new Color(120, 82, 160));
 
         JLabel nameLabel = new JLabel(item.getName(), SwingConstants.CENTER);
         nameLabel.setFont(new Font("Arial", Font.BOLD, 20));
         nameLabel.setForeground(new Color(72, 37, 120));
 
-        JLabel infoLabel = new JLabel("<html><center>"
-                + item.getCategory()
-                + "<br>Ціна: " + item.getPrice() + (item.isGoldItem() ? " золота" : " срібла")
-                + "<br>Рівень: " + item.getRequiredLevel()
-                + "</center></html>", SwingConstants.CENTER);
+        JLabel infoLabel = new JLabel(
+                "<html><center>"
+                        + item.getCategory()
+                        + "<br>Ціна: " + item.getPrice()
+                        + (item.isGoldItem() ? " золота" : " срібла")
+                        + "<br>Рівень: " + item.getRequiredLevel()
+                        + "</center></html>",
+                SwingConstants.CENTER
+        );
+
         infoLabel.setFont(new Font("Arial", Font.BOLD, 14));
         infoLabel.setForeground(new Color(120, 82, 160));
 
         JButton placeButton = createSmallButton("Поставити");
+
         placeButton.addActionListener(e -> {
             if ("Їжа".equals(item.getCategory())) {
                 gameState.addEnergy(20);
-                JOptionPane.showMessageDialog(this, "Енергію відновлено на 20.");
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Енергію відновлено на 20.",
+                        "Інвентар",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
             } else {
                 gameState.placeItem(item);
-                JOptionPane.showMessageDialog(this, item.getName() + " додано у кімнату. Відкрий режим ремонту, щоб перемістити предмет.");
+                JOptionPane.showMessageDialog(
+                        this,
+                        item.getName()
+                                + " додано у кімнату.\n\n"
+                                + "Відкрий режим ремонту, щоб перемістити предмет.",
+                        "Інвентар",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
             }
         });
 

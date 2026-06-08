@@ -54,7 +54,13 @@ public class CafeFrame extends JFrame {
     private static final Color BTN_RED    = new Color(190, 50, 50);
     private static final Color STATS_BG   = new Color(30, 30, 30, 210);
 
+    /** Відкрити кафе тільки для відвідування (без роботи). */
     public CafeFrame(GameState gameState) {
+        this(gameState, false);
+    }
+
+    /** Відкрити кафе з явним режимом: false=відвідувач, true=офіціант. */
+    public CafeFrame(GameState gameState, boolean startInWorkMode) {
         this.gameState = gameState;
 
         setTitle("VibeTower — Кафе ☕");
@@ -103,7 +109,7 @@ public class CafeFrame extends JFrame {
             activateWorkMode(bg);
             visitBtn.setVisible(false);
             workBtn.setVisible(false);
-            finishShiftBtn.setVisible(true);
+            // finishShiftBtn показується тільки після обслуговування всіх столиків
         });
         top.add(workBtn);
 
@@ -124,6 +130,20 @@ public class CafeFrame extends JFrame {
         top.add(energyBar);
 
         updateStats();
+
+        // ── Застосовуємо початковий режим ────────────────────────────────
+        if (startInWorkMode) {
+            // Одразу відкриваємо режим роботи, ховаємо кнопку відвідування
+            visitBtn.setVisible(false);
+            workBtn.setVisible(false);
+            workMode = true;
+            // activateWorkMode викликається після додавання bg до фрейму — відкладаємо
+            // finishShiftBtn покажеться після обслуговування всіх столиків
+            SwingUtilities.invokeLater(() -> activateWorkMode(bg));
+        } else {
+            // Режим відвідувача — ховаємо кнопку «Працювати»
+            workBtn.setVisible(false);
+        }
 
         // ── Персонаж гравця ──────────────────────────────────────────────────
         playerLabel = new JLabel("🧑", SwingConstants.CENTER);
@@ -172,8 +192,11 @@ public class CafeFrame extends JFrame {
             }
         };
         overlay.setOpaque(false);
-        overlay.setBounds(0, 0, 800, 700);
-        bg.add(overlay, Integer.valueOf(10));
+        overlay.setBounds(0, 0, 800, 650);
+        // Ховаємо персонажів щоб вони не були поверх меню
+        if (playerLabel != null) playerLabel.setVisible(false);
+        if (waiterLabel != null) waiterLabel.setVisible(false);
+        bg.add(overlay, 0);
         bg.revalidate();
         bg.repaint();
 
@@ -208,6 +231,8 @@ public class CafeFrame extends JFrame {
         closeBtn.setBounds(240, 285, 160, 36);
         closeBtn.addActionListener(e -> {
             bg.remove(overlay);
+            if (playerLabel != null) playerLabel.setVisible(true);
+            if (waiterLabel != null) waiterLabel.setVisible(true);
             bg.revalidate();
             bg.repaint();
         });
@@ -259,6 +284,8 @@ public class CafeFrame extends JFrame {
             orderedDish = emoji + " " + name;
             // Закриваємо меню
             bg.remove(overlay);
+            if (playerLabel != null) playerLabel.setVisible(true);
+            if (waiterLabel != null) waiterLabel.setVisible(true);
             bg.revalidate();
             bg.repaint();
             // Анімація — офіціант підходить до гравця
@@ -322,11 +349,15 @@ public class CafeFrame extends JFrame {
     //  РЕЖИМ РОБОТИ
     // ════════════════════════════════════════════════════════════════════════
     private void activateWorkMode(JPanel bg) {
+        // Тільки 2 столики як у початковій версії
         tables = new TableWidget[]{
                 new TableWidget(90,  145, bg),
-                new TableWidget(245, 280, bg),
+                new TableWidget(245, 280, bg)
         };
         ordersLeft = tables.length;
+
+        // Кнопка завершення прихована — з'явиться після обслуговування ВСІХ столиків
+        finishShiftBtn.setVisible(false);
 
         if (isCooldown) {
             for (TableWidget t : tables) t.clearOrder();
@@ -372,7 +403,10 @@ public class CafeFrame extends JFrame {
             String msg = "✅ Замовлення виконано!\n+" + silver + " 🪙  +10 XP  -5 ⚡";
             if (gotGold) msg += "\n🎉 +1 🌟 за 15-те замовлення!";
             JOptionPane.showMessageDialog(this, msg);
-            if (ordersLeft == 0) { JOptionPane.showMessageDialog(this, "🎉 Всі столики обслужені! Натисни «Завершити зміну» зверху."); }
+            if (ordersLeft == 0) {
+                finishShiftBtn.setVisible(true);
+                JOptionPane.showMessageDialog(this, "🎉 Всі столики обслужені!\nТепер натисни «Завершити зміну».");
+            }
             targetTable = null;
         });
     }
@@ -423,7 +457,16 @@ public class CafeFrame extends JFrame {
     //  СТАТИСТИКА
     // ════════════════════════════════════════════════════════════════════════
     private void updateStats() {
-        String timer = isCooldown
+        // Перераховуємо cooldown з реального часу при кожному виклику
+        long realDiff = gameState.getCafeCooldownEndTime() - System.currentTimeMillis();
+        if (realDiff > 0) {
+            isCooldown = true;
+            cooldownLeft = (int)(realDiff / 1000);
+        } else if (isCooldown && realDiff <= 0) {
+            isCooldown = false;
+            cooldownLeft = 0;
+        }
+        String timer = (isCooldown && cooldownLeft > 0)
                 ? String.format("  ⏳ До зміни: %02d:%02d", cooldownLeft/60, cooldownLeft%60)
                 : "";
         statsLabel.setText(String.format("⚡ %d/100  |  🪙 %d  |  🌟 %d  |  XP: %d%s",

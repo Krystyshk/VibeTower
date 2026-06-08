@@ -146,7 +146,7 @@ public class MapFrame extends JFrame {
         p.add(locationCard("🎵", "Нічний клуб", "Танці та коктейлі", 1, lvl,
                 () -> { new NightClubFrame(gameState).setVisible(true); dispose(); }));
         p.add(locationCard("☕", "Кафе",         "Відпочинок і їжа",  2, lvl,
-                () -> { new CafeFrame(gameState).setVisible(true); dispose(); }));
+                () -> { new CafeFrame(gameState, false).setVisible(true); dispose(); }));
         p.add(locationCard("🌳", "Парк",         "Прогулянки, сік, вата", 4, lvl,
                 () -> { new ParkFrame(gameState).setVisible(true); dispose(); }));
         p.add(locationCard("🏖", "Пляж",         "Мушлі та напої",    4, lvl,
@@ -164,7 +164,7 @@ public class MapFrame extends JFrame {
 
         int lvl = gameState.getLevel();
         p.add(jobCard("👔", "Офіціант",    "Кафе · +10-15🪙 · -5⚡", 2, lvl,
-                () -> { new CafeFrame(gameState).setVisible(true); dispose(); }));
+                () -> { new CafeFrame(gameState, true).setVisible(true); dispose(); }));
         p.add(jobCard("🧹", "Двірник",     "Прибирання · +6-10🪙 · -4⚡", 1, lvl,
                 () -> { new JanitorFrame(gameState, false).setVisible(true); dispose(); }));
         p.add(jobCard("🎬", "Працівник\nкінотеатру", "Каса · +15-25🪙 · -4⚡", 5, lvl,

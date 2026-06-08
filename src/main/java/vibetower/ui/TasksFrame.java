@@ -9,6 +9,7 @@ public class TasksFrame extends JFrame {
 
     private GameState gameState;
     private JPanel topPanel;
+    private JPanel tasksPanel;
 
     public TasksFrame(GameState gameState) {
         this.gameState = gameState;
@@ -34,20 +35,51 @@ public class TasksFrame extends JFrame {
 
         topPanel.add(titleLabel, BorderLayout.CENTER);
         topPanel.add(new CurrencyPanel(gameState), BorderLayout.EAST);
+
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
-        JPanel tasksPanel = new JPanel();
+        tasksPanel = new JPanel();
         tasksPanel.setOpaque(false);
         tasksPanel.setLayout(new GridLayout(5, 1, 10, 10));
         tasksPanel.setBorder(BorderFactory.createEmptyBorder(30, 100, 60, 100));
 
-        tasksPanel.add(createTaskCard("1. Прибрати квартиру", "Нагорода: +50 срібла, +20 XP", 50, 20));
-        tasksPanel.add(createTaskCard("2. Купити предмет інтер'єру", "Нагорода: +30 XP", 0, 30));
-        tasksPanel.add(createTaskCard("3. Відкрити інвентар", "Нагорода: +10 XP", 0, 10));
-        tasksPanel.add(createTaskCard("4. Зайти в режим ремонту", "Нагорода: +15 XP", 0, 15));
-        tasksPanel.add(createTaskCard("5. Зберегти прогрес", "Нагорода: +5 XP", 0, 5));
+        tasksPanel.add(createTaskCard(
+                "1. Прибрати квартиру",
+                "Нагорода: +50 срібла, +20 XP",
+                50,
+                20
+        ));
+
+        tasksPanel.add(createTaskCard(
+                "2. Купити предмет інтер'єру",
+                "Нагорода: +30 XP",
+                0,
+                30
+        ));
+
+        tasksPanel.add(createTaskCard(
+                "3. Відкрити інвентар",
+                "Нагорода: +10 XP",
+                0,
+                10
+        ));
+
+        tasksPanel.add(createTaskCard(
+                "4. Зайти в режим ремонту",
+                "Нагорода: +15 XP",
+                0,
+                15
+        ));
+
+        tasksPanel.add(createTaskCard(
+                "5. Зберегти прогрес",
+                "Нагорода: +5 XP",
+                0,
+                5
+        ));
 
         mainPanel.add(tasksPanel, BorderLayout.CENTER);
+
         add(mainPanel, BorderLayout.CENTER);
     }
 
@@ -104,6 +136,7 @@ public class TasksFrame extends JFrame {
 
         card.add(textPanel, BorderLayout.CENTER);
         card.add(completeButton, BorderLayout.EAST);
+
         return card;
     }
 

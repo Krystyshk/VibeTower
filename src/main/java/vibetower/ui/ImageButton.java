@@ -23,9 +23,9 @@ public class ImageButton extends JButton {
         URL imageUrl = getClass().getResource(imagePath);
 
         if (imageUrl != null) {
-            ImageIcon icon = new ImageIcon(imageUrl);
+            ImageIcon originalIcon = new ImageIcon(imageUrl);
 
-            Image scaledImage = icon.getImage().getScaledInstance(
+            Image scaledImage = originalIcon.getImage().getScaledInstance(
                     BUTTON_WIDTH,
                     BUTTON_HEIGHT,
                     Image.SCALE_SMOOTH
@@ -35,36 +35,6 @@ public class ImageButton extends JButton {
         } else {
             setText("Картинку не знайдено");
             setFont(new Font("Arial", Font.BOLD, 16));
-            System.out.println("Не знайдено картинку: " + imagePath);
-        }
-    }
-
-    public ImageButton(String imagePath, int width, int height) {
-        setPreferredSize(new Dimension(width, height));
-        setMinimumSize(new Dimension(width, height));
-        setMaximumSize(new Dimension(width, height));
-
-        setBorderPainted(false);
-        setContentAreaFilled(false);
-        setFocusPainted(false);
-        setOpaque(false);
-        setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        URL imageUrl = getClass().getResource(imagePath);
-
-        if (imageUrl != null) {
-            ImageIcon icon = new ImageIcon(imageUrl);
-
-            Image scaledImage = icon.getImage().getScaledInstance(
-                    width,
-                    height,
-                    Image.SCALE_SMOOTH
-            );
-
-            setIcon(new ImageIcon(scaledImage));
-        } else {
-            setText("Картинку не знайдено");
-            setFont(new Font("Arial", Font.BOLD, 14));
             System.out.println("Не знайдено картинку: " + imagePath);
         }
     }

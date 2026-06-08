@@ -12,7 +12,7 @@ public class LoginFrame extends StartFrame {
 
     private void openMainGame() {
         GameState gameState = SaveManager.loadGame();
-        HomeFrame homeFrame = new HomeFrame();
+        HomeFrame homeFrame = new HomeFrame(gameState);
         homeFrame.setVisible(true);
         dispose();
     }

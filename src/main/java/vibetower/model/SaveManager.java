@@ -34,8 +34,6 @@ public class SaveManager {
             in.close();
             return gameState;
         } catch (Exception e) {
-            // Bug fix: старий файл збереження несумісний з новою версією класу —
-            // видаляємо його і стартуємо нову гру замість краша
             System.out.println("Збереження застаріле або пошкоджене, створюємо нову гру: " + e.getMessage());
             file.delete();
             return new GameState();

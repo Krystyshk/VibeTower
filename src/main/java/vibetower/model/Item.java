@@ -12,17 +12,23 @@ public class Item implements Serializable {
     private int price;
     private String currency;
     private int minLevel;
+    private String imagePath;
 
     public Item(String name, int price) {
         this(name, "Інтер'єр", price, "silver", 1);
     }
 
     public Item(String name, String category, int price, String currency, int minLevel) {
+        this(name, category, price, currency, minLevel, null);
+    }
+
+    public Item(String name, String category, int price, String currency, int minLevel, String imagePath) {
         this.name = name;
         this.category = category;
         this.price = price;
         this.currency = currency;
         this.minLevel = minLevel;
+        this.imagePath = imagePath;
     }
 
     public String getName() {
@@ -43,6 +49,10 @@ public class Item implements Serializable {
 
     public int getMinLevel() {
         return minLevel;
+    }
+
+    public String getImagePath() {
+        return imagePath;
     }
 
     public String getPriceText() {

@@ -36,8 +36,12 @@ public class AnimatedCharacterPanel extends JPanel {
 
     // ── стан анімації ─────────────────────────────────────────────────────────
     private double animPhase = 0.0;
+    private double idlePhase = 0.0;
     private Timer  animTimer;
     private boolean walking = false;
+
+    // Амплітуда легкого "дихання" персонажа в режимі очікування
+    private static final double IDLE_BOB_AMPLITUDE = 3.0;
 
     // ── налаштування персонажа ────────────────────────────────────────────────
     private String gender    = "female";
@@ -181,8 +185,13 @@ public class AnimatedCharacterPanel extends JPanel {
             if (walking) {
                 animPhase += 0.18;
                 if (animPhase >= Math.PI * 2) animPhase -= Math.PI * 2;
-                repaint();
             }
+
+            // Легке "дихання" персонажа працює завжди, навіть у спокої
+            idlePhase += 0.06;
+            if (idlePhase >= Math.PI * 2) idlePhase -= Math.PI * 2;
+
+            repaint();
         });
         animTimer.start();
     }
@@ -227,6 +236,16 @@ public class AnimatedCharacterPanel extends JPanel {
         // ── кути анімації (тимчасово вимкнено для налаштування позиції) ──────
         double legSwing = 0;
         double armSwing = 0;
+
+        // Легке вертикальне "дихання" персонажа в стані спокою
+        double bobOffset = walking ? 0 : Math.sin(idlePhase) * IDLE_BOB_AMPLITUDE;
+
+        // ── м'яка тінь під ногами (нерухома, не залежить від "дихання") ───────
+        int shadowY = headY + headH - 40 + torsoH - 18 + legH;
+        g2.setColor(new Color(0, 0, 0, 40));
+        g2.fillOval(cx - legW, shadowY - 6, legW * 2, 22);
+
+        g2.translate(0, bobOffset);
 
         // ── порядок малювання (задні шари → передні) ─────────────────────────
 

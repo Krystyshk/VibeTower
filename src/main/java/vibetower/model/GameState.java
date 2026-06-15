@@ -2,18 +2,33 @@ package vibetower.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.UUID;
 
 public class GameState implements Serializable {
 
-    private static final long serialVersionUID = 7L;
+    private static final long serialVersionUID = 12L;
 
     private int silver;
     private int gold;
     private int level;
     private int experience;
     private int energy;
+
+    private String gender = "female";
+    private String playerName = "Гравець";
+
+    private String skinTone = "light";
+    private String hairStyle = "hair_wavy.png";
+    private String hairColor = "brown";
+    private String eyeColor = "eyes_brown.png";
+
+    private String topClothing = "top_tshirt_pink.png";
+    private String bottomClothing = "bottom_jeans_blue.png";
+
+    private HashMap<String, Item> equippedItems = new HashMap<>();
 
     private String selectedApartment;
     private String wallpaper;
@@ -51,6 +66,20 @@ public class GameState implements Serializable {
         level = 1;
         experience = 0;
         energy = 100;
+
+        gender = "female";
+        playerName = "Гравець";
+
+        skinTone = "light";
+        hairStyle = "hair_wavy.png";
+        hairColor = "brown";
+        eyeColor = "eyes_brown.png";
+
+        topClothing = "top_tshirt_pink.png";
+        bottomClothing = "bottom_jeans_blue.png";
+
+        equippedItems = new HashMap<>();
+        addDefaultEquippedItems();
 
         selectedApartment = "blue";
         wallpaper = "Білі шпалери";
@@ -98,6 +127,23 @@ public class GameState implements Serializable {
         if (completedTasks == null) completedTasks = new HashSet<>();
         if (rewardTakenTasks == null) rewardTakenTasks = new HashSet<>();
         if (activeTaskId == null) activeTaskId = "";
+
+        if (gender == null || gender.trim().isEmpty()) gender = "female";
+        if (playerName == null || playerName.trim().isEmpty()) playerName = "Гравець";
+
+        if (skinTone == null || skinTone.trim().isEmpty()) skinTone = "light";
+        if (hairStyle == null || hairStyle.trim().isEmpty()) hairStyle = "hair_wavy.png";
+        if (hairColor == null || hairColor.trim().isEmpty()) hairColor = "brown";
+        if (eyeColor == null || eyeColor.trim().isEmpty()) eyeColor = "eyes_brown.png";
+
+        if (topClothing == null || topClothing.trim().isEmpty()) topClothing = "top_tshirt_pink.png";
+        if (bottomClothing == null || bottomClothing.trim().isEmpty()) bottomClothing = "bottom_jeans_blue.png";
+
+        if (equippedItems == null) {
+            equippedItems = new HashMap<>();
+        }
+
+        addDefaultEquippedItems();
 
         if (selectedApartment == null || selectedApartment.isEmpty()) selectedApartment = "blue";
         if (wallpaper == null) wallpaper = "Білі шпалери";
@@ -153,6 +199,60 @@ public class GameState implements Serializable {
         if (energy > 100) energy = 100;
 
         addStartDoorIfMissing();
+    }
+
+    private void addDefaultEquippedItems() {
+        if (equippedItems == null) {
+            equippedItems = new HashMap<>();
+        }
+
+        if (!equippedItems.containsKey("top")) {
+            equippedItems.put("top", new Item(
+                    "Рожева футболка",
+                    "Одяг",
+                    0,
+                    "silver",
+                    1,
+                    "👕",
+                    topClothing
+            ));
+        }
+
+        if (!equippedItems.containsKey("bottom")) {
+            equippedItems.put("bottom", new Item(
+                    "Сині джинси",
+                    "Одяг",
+                    0,
+                    "silver",
+                    1,
+                    "👖",
+                    bottomClothing
+            ));
+        }
+
+        if (!equippedItems.containsKey("hair")) {
+            equippedItems.put("hair", new Item(
+                    "Зачіска",
+                    "Зовнішність",
+                    0,
+                    "silver",
+                    1,
+                    "💇",
+                    hairStyle
+            ));
+        }
+
+        if (!equippedItems.containsKey("eyes")) {
+            equippedItems.put("eyes", new Item(
+                    "Очі",
+                    "Зовнішність",
+                    0,
+                    "silver",
+                    1,
+                    "👁",
+                    eyeColor
+            ));
+        }
     }
 
     private void addStartDoorIfMissing() {
@@ -794,12 +894,297 @@ public class GameState implements Serializable {
         SaveManager.saveGame(this);
     }
 
-    public int getSilver() { return silver; }
-    public int getGold() { return gold; }
-    public int getLevel() { return level; }
-    public int getExperience() { return experience; }
-    public int getXp() { return experience; }
-    public int getEnergy() { return energy; }
+    public int getSilver() {
+        return silver;
+    }
+
+    public int getGold() {
+        return gold;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public int getExperience() {
+        return experience;
+    }
+
+    public int getXp() {
+        return experience;
+    }
+
+    public int getEnergy() {
+        return energy;
+    }
+
+    public String getGender() {
+        fixAfterLoad();
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        if (gender == null || gender.trim().isEmpty()) {
+            this.gender = "female";
+        } else {
+            this.gender = gender;
+        }
+
+        SaveManager.saveGame(this);
+    }
+
+    public String getPlayerName() {
+        fixAfterLoad();
+        return playerName;
+    }
+
+    public void setPlayerName(String playerName) {
+        if (playerName == null || playerName.trim().isEmpty()) {
+            this.playerName = "Гравець";
+        } else {
+            this.playerName = playerName;
+        }
+
+        SaveManager.saveGame(this);
+    }
+
+    public String getCharacterName() {
+        return getPlayerName();
+    }
+
+    public void setCharacterName(String characterName) {
+        setPlayerName(characterName);
+    }
+
+    public String getName() {
+        return getPlayerName();
+    }
+
+    public void setName(String name) {
+        setPlayerName(name);
+    }
+
+    public String getSkinTone() {
+        fixAfterLoad();
+        return skinTone;
+    }
+
+    public void setSkinTone(String skinTone) {
+        if (skinTone == null || skinTone.trim().isEmpty()) {
+            this.skinTone = "light";
+        } else {
+            this.skinTone = skinTone;
+        }
+
+        SaveManager.saveGame(this);
+    }
+
+    public String getHairStyle() {
+        fixAfterLoad();
+        return hairStyle;
+    }
+
+    public void setHairStyle(String hairStyle) {
+        if (hairStyle == null || hairStyle.trim().isEmpty()) {
+            this.hairStyle = "hair_wavy.png";
+        } else {
+            this.hairStyle = hairStyle;
+        }
+
+        SaveManager.saveGame(this);
+    }
+
+    public String getHairColor() {
+        fixAfterLoad();
+        return hairColor;
+    }
+
+    public void setHairColor(String hairColor) {
+        if (hairColor == null || hairColor.trim().isEmpty()) {
+            this.hairColor = "brown";
+        } else {
+            this.hairColor = hairColor;
+        }
+
+        SaveManager.saveGame(this);
+    }
+
+    public String getEyeColor() {
+        fixAfterLoad();
+        return eyeColor;
+    }
+
+    public void setEyeColor(String eyeColor) {
+        if (eyeColor == null || eyeColor.trim().isEmpty()) {
+            this.eyeColor = "eyes_brown.png";
+        } else {
+            this.eyeColor = eyeColor;
+        }
+
+        SaveManager.saveGame(this);
+    }
+
+    public String getTopClothing() {
+        fixAfterLoad();
+        return topClothing;
+    }
+
+    public void setTopClothing(String topClothing) {
+        if (topClothing == null || topClothing.trim().isEmpty()) {
+            this.topClothing = "top_tshirt_pink.png";
+        } else {
+            this.topClothing = topClothing;
+        }
+
+        equippedItems.put("top", new Item(
+                "Верх",
+                "Одяг",
+                0,
+                "silver",
+                1,
+                "👕",
+                this.topClothing
+        ));
+
+        SaveManager.saveGame(this);
+    }
+
+    public String getBottomClothing() {
+        fixAfterLoad();
+        return bottomClothing;
+    }
+
+    public void setBottomClothing(String bottomClothing) {
+        if (bottomClothing == null || bottomClothing.trim().isEmpty()) {
+            this.bottomClothing = "bottom_jeans_blue.png";
+        } else {
+            this.bottomClothing = bottomClothing;
+        }
+
+        equippedItems.put("bottom", new Item(
+                "Низ",
+                "Одяг",
+                0,
+                "silver",
+                1,
+                "👖",
+                this.bottomClothing
+        ));
+
+        SaveManager.saveGame(this);
+    }
+
+    public Map<String, Item> getEquippedItems() {
+        fixAfterLoad();
+        return equippedItems;
+    }
+
+    public void setEquippedItems(Map<String, Item> equippedItems) {
+        if (equippedItems == null) {
+            this.equippedItems = new HashMap<>();
+        } else {
+            this.equippedItems = new HashMap<>(equippedItems);
+        }
+
+        fixAfterLoad();
+        SaveManager.saveGame(this);
+    }
+
+    public void equipItem(String category, Item item) {
+        fixAfterLoad();
+
+        if (category == null || category.trim().isEmpty()) return;
+        if (item == null) return;
+
+        equippedItems.put(category, item);
+
+        if ("top".equals(category) || "верх".equalsIgnoreCase(category)) {
+            topClothing = item.getImageFile();
+        }
+
+        if ("bottom".equals(category) || "низ".equalsIgnoreCase(category)) {
+            bottomClothing = item.getImageFile();
+        }
+
+        if ("hair".equals(category) || "волосся".equalsIgnoreCase(category)) {
+            hairStyle = item.getImageFile();
+        }
+
+        if ("eyes".equals(category) || "очі".equalsIgnoreCase(category)) {
+            eyeColor = item.getImageFile();
+        }
+
+        SaveManager.saveGame(this);
+    }
+
+    public void equipItem(String category, String imageFile) {
+        fixAfterLoad();
+
+        if (category == null || category.trim().isEmpty()) return;
+        if (imageFile == null || imageFile.trim().isEmpty()) return;
+
+        Item item = new Item(
+                category,
+                "Одяг",
+                0,
+                "silver",
+                1,
+                "👕",
+                imageFile
+        );
+
+        equipItem(category, item);
+    }
+
+    public Item getEquippedItem(String category) {
+        fixAfterLoad();
+
+        if (category == null) return null;
+
+        return equippedItems.get(category);
+    }
+
+    public String getEquippedItemImage(String category) {
+        fixAfterLoad();
+
+        Item item = getEquippedItem(category);
+
+        if (item == null) return "";
+
+        return item.getImageFile();
+    }
+
+    public String getTopItem() {
+        return getTopClothing();
+    }
+
+    public void setTopItem(String topItem) {
+        setTopClothing(topItem);
+    }
+
+    public String getBottomItem() {
+        return getBottomClothing();
+    }
+
+    public void setBottomItem(String bottomItem) {
+        setBottomClothing(bottomItem);
+    }
+
+    public String getSelectedTop() {
+        return getTopClothing();
+    }
+
+    public void setSelectedTop(String selectedTop) {
+        setTopClothing(selectedTop);
+    }
+
+    public String getSelectedBottom() {
+        return getBottomClothing();
+    }
+
+    public void setSelectedBottom(String selectedBottom) {
+        setBottomClothing(selectedBottom);
+    }
 
     public String getSelectedApartment() {
         fixAfterLoad();
@@ -853,48 +1238,74 @@ public class GameState implements Serializable {
         return completedTasks;
     }
 
-    public boolean isSecondRoomBought() { return secondRoomBought; }
-    public boolean isBathroomBought() { return bathroomBought; }
-    public boolean isBedroomBought() { return bedroomBought; }
-    public boolean isKitchenBought() { return kitchenBought; }
-    public boolean isBigRoomBought() { return bigRoomBought; }
+    public boolean isSecondRoomBought() {
+        return secondRoomBought;
+    }
 
-    public long getCafeCooldownEndTime() { return cafeCooldownEndTime; }
+    public boolean isBathroomBought() {
+        return bathroomBought;
+    }
+
+    public boolean isBedroomBought() {
+        return bedroomBought;
+    }
+
+    public boolean isKitchenBought() {
+        return kitchenBought;
+    }
+
+    public boolean isBigRoomBought() {
+        return bigRoomBought;
+    }
+
+    public long getCafeCooldownEndTime() {
+        return cafeCooldownEndTime;
+    }
 
     public void setCafeCooldownEndTime(long cafeCooldownEndTime) {
         this.cafeCooldownEndTime = cafeCooldownEndTime;
         SaveManager.saveGame(this);
     }
 
-    public long getShellCooldownEndTime() { return shellCooldownEndTime; }
+    public long getShellCooldownEndTime() {
+        return shellCooldownEndTime;
+    }
 
     public void setShellCooldownEndTime(long shellCooldownEndTime) {
         this.shellCooldownEndTime = shellCooldownEndTime;
         SaveManager.saveGame(this);
     }
 
-    public long getCinemaWorkCooldownEndTime() { return cinemaWorkCooldownEndTime; }
+    public long getCinemaWorkCooldownEndTime() {
+        return cinemaWorkCooldownEndTime;
+    }
 
     public void setCinemaWorkCooldownEndTime(long cinemaWorkCooldownEndTime) {
         this.cinemaWorkCooldownEndTime = cinemaWorkCooldownEndTime;
         SaveManager.saveGame(this);
     }
 
-    public boolean isJanitorWorkDone() { return janitorWorkDone; }
+    public boolean isJanitorWorkDone() {
+        return janitorWorkDone;
+    }
 
     public void setJanitorWorkDone() {
         janitorWorkDone = true;
         SaveManager.saveGame(this);
     }
 
-    public boolean isNpcQuestDone() { return npcQuestDone; }
+    public boolean isNpcQuestDone() {
+        return npcQuestDone;
+    }
 
     public void setNpcQuestDone() {
         npcQuestDone = true;
         SaveManager.saveGame(this);
     }
 
-    public boolean isCottonCandyDone() { return cottonCandyDone; }
+    public boolean isCottonCandyDone() {
+        return cottonCandyDone;
+    }
 
     public void setCottonCandyDone() {
         cottonCandyDone = true;
@@ -919,5 +1330,221 @@ public class GameState implements Serializable {
     public void setExperience(int experience) {
         this.experience = Math.max(0, experience);
         SaveManager.saveGame(this);
+    }
+    public void unequipItem(String category) {
+        fixAfterLoad();
+
+        if (category == null || category.trim().isEmpty()) return;
+
+        equippedItems.remove(category);
+
+        if ("top".equals(category) || "верх".equalsIgnoreCase(category)) {
+            topClothing = "top_tshirt_pink.png";
+
+            equippedItems.put("top", new Item(
+                    "Рожева футболка",
+                    "Одяг",
+                    0,
+                    "silver",
+                    1,
+                    "👕",
+                    topClothing
+            ));
+        }
+
+        if ("bottom".equals(category) || "низ".equalsIgnoreCase(category)) {
+            bottomClothing = "bottom_jeans_blue.png";
+
+            equippedItems.put("bottom", new Item(
+                    "Сині джинси",
+                    "Одяг",
+                    0,
+                    "silver",
+                    1,
+                    "👖",
+                    bottomClothing
+            ));
+        }
+
+        if ("hair".equals(category) || "волосся".equalsIgnoreCase(category)) {
+            hairStyle = "hair_wavy.png";
+
+            equippedItems.put("hair", new Item(
+                    "Зачіска",
+                    "Зовнішність",
+                    0,
+                    "silver",
+                    1,
+                    "💇",
+                    hairStyle
+            ));
+        }
+
+        if ("eyes".equals(category) || "очі".equalsIgnoreCase(category)) {
+            eyeColor = "eyes_brown.png";
+
+            equippedItems.put("eyes", new Item(
+                    "Очі",
+                    "Зовнішність",
+                    0,
+                    "silver",
+                    1,
+                    "👁",
+                    eyeColor
+            ));
+        }
+
+        SaveManager.saveGame(this);
+    }
+    public void equipItem(Item item) {
+        fixAfterLoad();
+
+        if (item == null) return;
+
+        String category = item.getCategory();
+
+        if (category == null || category.trim().isEmpty()) {
+            category = "Одяг";
+        }
+
+        String lowerCategory = category.toLowerCase();
+
+        if (lowerCategory.contains("верх")
+                || lowerCategory.contains("top")
+                || lowerCategory.contains("футбол")
+                || lowerCategory.contains("кофт")
+                || lowerCategory.contains("hoodie")
+                || lowerCategory.contains("shirt")) {
+            equipItem("top", item);
+            return;
+        }
+
+        if (lowerCategory.contains("низ")
+                || lowerCategory.contains("bottom")
+                || lowerCategory.contains("джинс")
+                || lowerCategory.contains("штани")
+                || lowerCategory.contains("легінс")
+                || lowerCategory.contains("short")) {
+            equipItem("bottom", item);
+            return;
+        }
+
+        if (lowerCategory.contains("волос")
+                || lowerCategory.contains("hair")
+                || lowerCategory.contains("зачіск")) {
+            equipItem("hair", item);
+            return;
+        }
+
+        if (lowerCategory.contains("оч")
+                || lowerCategory.contains("eye")) {
+            equipItem("eyes", item);
+            return;
+        }
+
+        equipItem(category, item);
+    }
+    public String getSkinColor() {
+        return getSkinTone();
+    }
+
+    public void setSkinColor(String skinColor) {
+        setSkinTone(skinColor);
+    }
+    public void setAppearance(String gender, String skinColor, String hairStyle, String eyeColor) {
+        setGender(gender);
+        setSkinTone(skinColor);
+        setHairStyle(hairStyle);
+        setEyeColor(eyeColor);
+
+        SaveManager.saveGame(this);
+    }
+    public String getAppearance() {
+        return getGender() + ";" + getSkinTone() + ";" + getHairStyle() + ";" + getEyeColor();
+    }
+    public boolean hasAccount() {
+        return playerName != null && !playerName.trim().isEmpty();
+    }
+
+    public void createAccount(String playerName, String gender) {
+        setPlayerName(playerName);
+        setGender(gender);
+        SaveManager.saveGame(this);
+    }
+
+    public void createAccount(String playerName) {
+        setPlayerName(playerName);
+        SaveManager.saveGame(this);
+    }
+    public boolean checkLogin(String login, String password) {
+        fixAfterLoad();
+
+        if (login == null || login.trim().isEmpty()) {
+            return false;
+        }
+
+        if (password == null || password.trim().isEmpty()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean checkPassword(String password) {
+        return password != null && !password.trim().isEmpty();
+    }
+
+    public void saveLoginData(String login, String password) {
+        if (login != null && !login.trim().isEmpty()) {
+            this.playerName = login.trim();
+        }
+
+        SaveManager.saveGame(this);
+    }
+
+    public void registerAccount(String login, String password) {
+        saveLoginData(login, password);
+    }
+
+    public void registerAccount(String login, String password, String gender) {
+        saveLoginData(login, password);
+        setGender(gender);
+    }
+    public boolean buyClothingItem(Item item) {
+        fixAfterLoad();
+
+        if (item == null) {
+            return false;
+        }
+
+        if (level < item.getRequiredLevel()) {
+            return false;
+        }
+
+        boolean paid;
+
+        if (item.isGoldItem()) {
+            paid = spendGold(item.getPrice());
+        } else {
+            paid = spendSilver(item.getPrice());
+        }
+
+        if (!paid) {
+            return false;
+        }
+
+        inventory.add(item);
+
+        SaveManager.saveGame(this);
+
+        return true;
+    }
+    public void setCharacterInfo(String characterName, String gender) {
+        setPlayerName(characterName);
+        setGender(gender);
+        SaveManager.saveGame(this);
+    }
+    public void setPlayerInfo(String playerName, String gender) {
+        setCharacterInfo(playerName, gender);
     }
 }

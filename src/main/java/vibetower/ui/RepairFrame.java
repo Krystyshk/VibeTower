@@ -1173,6 +1173,14 @@ public class RepairFrame extends JDialog {
             savedItem.setHeight(getHeight());
             savedItem.setMirrored(mirrored);
 
+            if (item != null) {
+                savedItem.setItem(item);
+                savedItem.setItemName(item.getName());
+                savedItem.setItemIcon(item.getIcon());
+                savedItem.setItemCategory(item.getCategory());
+                savedItem.setImageFile(item.getImageFile());
+            }
+
             if ("DOOR".equals(itemType)) {
                 savedItem.setDoor(true);
             }

@@ -27,8 +27,8 @@ public class StartFrame extends JFrame {
         loginButton.setBounds(500, 300, 390, 95);
 
         loginButton.addActionListener(e -> {
-            HomeFrame homeFrame = new HomeFrame(gameState);
-            homeFrame.setVisible(true);
+            LoginFrame loginFrame = new LoginFrame(gameState);
+            loginFrame.setVisible(true);
             dispose();
         });
 

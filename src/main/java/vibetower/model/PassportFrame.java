@@ -1,4 +1,4 @@
-package vibetower.ui;
+package vibetower.model;
 
 import vibetower.model.GameState;
 

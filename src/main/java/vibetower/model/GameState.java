@@ -9,6 +9,9 @@ public class GameState implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private String email;
+    private String password;
+
     private int silver;
     private int gold;
     private int level;
@@ -279,6 +282,29 @@ public class GameState implements Serializable {
 
     public void setNpcQuestDone() {
         this.npcQuestDone = true;
+    }
+
+    public void unequipItem(String category) {
+        getEquippedItems().remove(category);
+    }
+
+    public boolean hasAccount() {
+        return email != null && !email.isEmpty();
+    }
+
+    public boolean registerAccount(String email, String password) {
+        this.email = email;
+        this.password = password;
+        return true;
+    }
+
+    public boolean checkLogin(String email, String password) {
+        if (!hasAccount()) return false;
+        return this.email.equals(email) && this.password.equals(password);
+    }
+
+    public String getEmail() {
+        return email;
     }
 
     public boolean isCottonCandyDone() {

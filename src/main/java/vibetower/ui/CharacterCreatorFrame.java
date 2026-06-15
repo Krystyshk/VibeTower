@@ -2,6 +2,7 @@ package vibetower.ui;
 
 import vibetower.model.GameState;
 import vibetower.model.HomeFrame;
+import vibetower.model.SaveManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,28 +47,28 @@ public class CharacterCreatorFrame extends JFrame {
          */
 
         emailField = createTextField();
-        emailField.setBounds(520, 342, 310, 24);
+        emailField.setBounds(521, 316, 310, 24);
         mainPanel.add(emailField);
 
         passwordField = createPasswordField();
-        passwordField.setBounds(520, 402, 310, 24);
+        passwordField.setBounds(521, 367, 310, 24);
         mainPanel.add(passwordField);
 
         repeatPasswordField = createPasswordField();
-        repeatPasswordField.setBounds(520, 462, 310, 24);
+        repeatPasswordField.setBounds(521, 415, 310, 24);
         mainPanel.add(repeatPasswordField);
 
         characterNameField = createTextField();
-        characterNameField.setBounds(520, 522, 310, 24);
+        characterNameField.setBounds(521, 464, 310, 24);
         mainPanel.add(characterNameField);
 
         JButton registerButton = createHotspotButton();
-        registerButton.setBounds(500, 555, 350, 65);
+        registerButton.setBounds(500, 501, 350, 65);
         registerButton.addActionListener(e -> registerUser());
         mainPanel.add(registerButton);
 
         JButton backButton = createHotspotButton();
-        backButton.setBounds(555, 625, 190, 45);
+        backButton.setBounds(555, 571, 190, 45);
         backButton.addActionListener(e -> {
             StartFrame startFrame = new StartFrame(gameState);
             startFrame.setVisible(true);
@@ -76,7 +77,7 @@ public class CharacterCreatorFrame extends JFrame {
         mainPanel.add(backButton);
 
         JButton loginButton = createHotspotButton();
-        loginButton.setBounds(650, 675, 200, 35);
+        loginButton.setBounds(650, 631, 200, 35);
         loginButton.addActionListener(e -> {
             StartFrame startFrame = new StartFrame(gameState);
             startFrame.setVisible(true);
@@ -182,12 +183,13 @@ public class CharacterCreatorFrame extends JFrame {
             return;
         }
 
+        gameState.registerAccount(email, password);
+        gameState.setCharacterInfo(characterName, selectedGender);
+        vibetower.model.SaveManager.saveGame(gameState);
+
         JOptionPane.showMessageDialog(
                 this,
-                "Акаунт створено!\n" +
-                        "Email: " + email + "\n" +
-                        "Ім’я персонажа: " + characterName + "\n" +
-                        "Тип персонажа: " + selectedGender,
+                "Акаунт створено! Ласкаво просимо, " + characterName + "!",
                 "Успішно",
                 JOptionPane.INFORMATION_MESSAGE
         );

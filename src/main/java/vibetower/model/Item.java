@@ -3,31 +3,26 @@ package vibetower.model;
 import java.io.Serializable;
 
 public class Item implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
     private String name;
     private String category;
-    private String icon;
     private int price;
     private String currency;
-    private int requiredLevel;
-    private int x;
-    private int y;
+    private int minLevel;
+    private String icon;
+    private String imageFile;
 
-    public Item(String name, int price) {
-        this(name, "Меблі", "▣", price, "silver", 1);
+    public Item(String name, String category, int price, String currency, int minLevel, String icon) {
+        this(name, category, price, currency, minLevel, icon, "");
     }
 
-    public Item(String name, String category, String icon, int price, String currency, int requiredLevel) {
+    public Item(String name, String category, int price, String currency, int minLevel, String icon, String imageFile) {
         this.name = name;
         this.category = category;
-        this.icon = icon;
         this.price = price;
         this.currency = currency;
-        this.requiredLevel = requiredLevel;
-        this.x = 120;
-        this.y = 120;
+        this.minLevel = minLevel;
+        this.icon = icon;
+        this.imageFile = imageFile;
     }
 
     public String getName() {
@@ -38,10 +33,6 @@ public class Item implements Serializable {
         return category;
     }
 
-    public String getIcon() {
-        return icon;
-    }
-
     public int getPrice() {
         return price;
     }
@@ -50,24 +41,27 @@ public class Item implements Serializable {
         return currency;
     }
 
+    public int getMinLevel() {
+        return minLevel;
+    }
+
     public int getRequiredLevel() {
-        return requiredLevel;
+        return minLevel;
     }
 
     public boolean isGoldItem() {
-        return "gold".equalsIgnoreCase(currency);
+        return "gold".equals(currency);
     }
 
-    public int getX() {
-        return x;
+    public String getIcon() {
+        return icon;
     }
 
-    public int getY() {
-        return y;
+    public String getImageFile() {
+        return imageFile;
     }
 
-    public void setPosition(int x, int y) {
-        this.x = x;
-        this.y = y;
+    public String getFullName() {
+        return icon + " " + name + " (" + category + ")";
     }
 }

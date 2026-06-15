@@ -146,8 +146,7 @@ public class TasksFrame extends JFrame {
                         120,
                         120,
                         0,
-                        new Item("Ваза-нагорода", "Декор", "🏺", 0, "silver", 1)
-                ),
+                        new Item("Назва", "Категорія", 120, "silver", 1, "🛋", "png/sofa.png")                ),
                 new Task(
                         "rest_home",
                         "Відновити енергію вдома",

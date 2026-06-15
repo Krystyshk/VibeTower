@@ -3,10 +3,11 @@ package vibetower.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.UUID;
 
 public class GameState implements Serializable {
 
-    private static final long serialVersionUID = 4L;
+    private static final long serialVersionUID = 7L;
 
     private int silver;
     private int gold;
@@ -31,6 +32,10 @@ public class GameState implements Serializable {
 
     private ArrayList<Item> inventory;
     private ArrayList<Item> placedItems;
+
+    private ArrayList<Room> rooms;
+    private String currentRoomId;
+
     private HashSet<String> completedTasks;
     private HashSet<String> rewardTakenTasks;
 
@@ -64,6 +69,17 @@ public class GameState implements Serializable {
 
         inventory = new ArrayList<>();
         placedItems = new ArrayList<>();
+
+        rooms = new ArrayList<>();
+        currentRoomId = "main";
+
+        rooms.add(new Room(
+                "main",
+                "Твоя квартира",
+                selectedApartment,
+                getBackgroundByApartmentType(selectedApartment)
+        ));
+
         completedTasks = new HashSet<>();
         rewardTakenTasks = new HashSet<>();
 
@@ -72,6 +88,8 @@ public class GameState implements Serializable {
         janitorWorkDone = false;
         npcQuestDone = false;
         cottonCandyDone = false;
+
+        addStartDoorIfMissing();
     }
 
     public void fixAfterLoad() {
@@ -85,6 +103,46 @@ public class GameState implements Serializable {
         if (wallpaper == null) wallpaper = "Білі шпалери";
         if (floor == null) floor = "Коричневий паркет";
 
+        if (rooms == null) rooms = new ArrayList<>();
+        if (currentRoomId == null || currentRoomId.isEmpty()) currentRoomId = "main";
+
+        if (rooms.isEmpty()) {
+            String type = normalizeRoomType(selectedApartment);
+
+            rooms.add(new Room(
+                    "main",
+                    "Твоя квартира",
+                    type,
+                    getBackgroundByApartmentType(type)
+            ));
+        }
+
+        boolean hasMainRoom = false;
+
+        for (Room room : rooms) {
+            if (room != null && "main".equals(room.getId())) {
+                hasMainRoom = true;
+                break;
+            }
+        }
+
+        if (!hasMainRoom) {
+            String type = normalizeRoomType(selectedApartment);
+
+            rooms.add(0, new Room(
+                    "main",
+                    "Твоя квартира",
+                    type,
+                    getBackgroundByApartmentType(type)
+            ));
+        }
+
+        for (Room room : rooms) {
+            if (room != null) {
+                room.fixAfterLoad();
+            }
+        }
+
         if (level < 1) level = 1;
         if (level > 10) level = 10;
 
@@ -93,6 +151,34 @@ public class GameState implements Serializable {
         if (experience < 0) experience = 0;
         if (energy < 0) energy = 0;
         if (energy > 100) energy = 100;
+
+        addStartDoorIfMissing();
+    }
+
+    private void addStartDoorIfMissing() {
+        if (inventory == null) {
+            inventory = new ArrayList<>();
+        }
+
+        for (Item item : inventory) {
+            if (item == null || item.getName() == null) continue;
+
+            String name = item.getName().toLowerCase();
+
+            if (name.contains("двері") || name.contains("дверь")) {
+                return;
+            }
+        }
+
+        inventory.add(new Item(
+                "Білі двері",
+                "Декор",
+                0,
+                "silver",
+                1,
+                "🚪",
+                "білі двері.png"
+        ));
     }
 
     public void startTask(String taskId) {
@@ -255,15 +341,100 @@ public class GameState implements Serializable {
     public void placeItem(Item item) {
         fixAfterLoad();
 
-        if (item != null && !placedItems.contains(item)) {
-            placedItems.add(item);
-            SaveManager.saveGame(this);
+        if (item == null) return;
+
+        placedItems.add(item);
+
+        Room room = getCurrentRoom();
+
+        if (room != null) {
+            room.getPlacedItems().add(item);
         }
+
+        SaveManager.saveGame(this);
     }
 
     public void removePlacedItem(Item item) {
         fixAfterLoad();
+
         placedItems.remove(item);
+
+        Room room = getCurrentRoom();
+
+        if (room != null) {
+            room.getPlacedItems().remove(item);
+        }
+
+        SaveManager.saveGame(this);
+    }
+
+    public PlacedRoomItem addPlacedRoomItem(Item item, int x, int y, int width, int height) {
+        fixAfterLoad();
+
+        if (item == null) {
+            return null;
+        }
+
+        PlacedRoomItem placedRoomItem = new PlacedRoomItem(item, x, y, width, height);
+
+        Room room = getCurrentRoom();
+
+        if (room != null) {
+            room.addPlacedRoomItem(placedRoomItem);
+        }
+
+        if (!placedItems.contains(item)) {
+            placedItems.add(item);
+        }
+
+        SaveManager.saveGame(this);
+
+        return placedRoomItem;
+    }
+
+    public void removePlacedRoomItem(PlacedRoomItem placedRoomItem) {
+        fixAfterLoad();
+
+        if (placedRoomItem == null) {
+            return;
+        }
+
+        Room room = getCurrentRoom();
+
+        if (room != null) {
+            room.removePlacedRoomItem(placedRoomItem);
+        }
+
+        if (placedRoomItem.getItem() != null) {
+            placedItems.remove(placedRoomItem.getItem());
+        }
+
+        SaveManager.saveGame(this);
+    }
+
+    public ArrayList<PlacedRoomItem> getCurrentRoomPlacedRoomItems() {
+        fixAfterLoad();
+
+        Room room = getCurrentRoom();
+
+        if (room == null) {
+            return new ArrayList<>();
+        }
+
+        return room.getPlacedRoomItems();
+    }
+
+    public void clearCurrentRoomPlacedItems() {
+        fixAfterLoad();
+
+        Room room = getCurrentRoom();
+
+        if (room != null) {
+            room.clearRoomItems();
+        }
+
+        placedItems.clear();
+
         SaveManager.saveGame(this);
     }
 
@@ -272,7 +443,7 @@ public class GameState implements Serializable {
 
         int comfort = 0;
 
-        for (Item item : placedItems) {
+        for (Item item : getPlacedItems()) {
             if (item == null) continue;
 
             comfort += 5;
@@ -348,6 +519,134 @@ public class GameState implements Serializable {
         SaveManager.saveGame(this);
 
         return roomName + " куплено! Кімната додана до квартири.";
+    }
+
+    public Room addCustomRoom(String roomName, String roomType) {
+        fixAfterLoad();
+
+        if (roomName == null || roomName.trim().isEmpty()) {
+            roomName = "Нова кімната";
+        }
+
+        String normalizedType = normalizeRoomType(roomType);
+        String id = "room_" + UUID.randomUUID().toString().replace("-", "");
+
+        Room room = new Room(
+                id,
+                roomName.trim(),
+                normalizedType,
+                getBackgroundByApartmentType(normalizedType)
+        );
+
+        rooms.add(room);
+        SaveManager.saveGame(this);
+
+        return room;
+    }
+
+    public ArrayList<Room> getRooms() {
+        fixAfterLoad();
+        return rooms;
+    }
+
+    public Room getCurrentRoom() {
+        fixAfterLoad();
+
+        for (Room room : rooms) {
+            if (room != null && room.getId().equals(currentRoomId)) {
+                return room;
+            }
+        }
+
+        currentRoomId = "main";
+
+        for (Room room : rooms) {
+            if (room != null && "main".equals(room.getId())) {
+                return room;
+            }
+        }
+
+        return null;
+    }
+
+    public String getCurrentRoomId() {
+        fixAfterLoad();
+        return currentRoomId;
+    }
+
+    public void setCurrentRoomId(String roomId) {
+        fixAfterLoad();
+
+        if (roomId == null || roomId.isEmpty()) return;
+
+        for (Room room : rooms) {
+            if (room != null && roomId.equals(room.getId())) {
+                currentRoomId = roomId;
+                SaveManager.saveGame(this);
+                return;
+            }
+        }
+    }
+
+    public String getCurrentRoomName() {
+        Room room = getCurrentRoom();
+
+        if (room == null) return "Твоя квартира";
+
+        return room.getName();
+    }
+
+    public String getCurrentRoomBackgroundImage() {
+        Room room = getCurrentRoom();
+
+        if (room == null) {
+            return getBackgroundByApartmentType(selectedApartment);
+        }
+
+        return room.getBackgroundImage();
+    }
+
+    public String normalizeRoomType(String roomType) {
+        if (roomType == null || roomType.isEmpty()) {
+            return "blue";
+        }
+
+        if (roomType.equalsIgnoreCase("blue")
+                || roomType.equalsIgnoreCase("Синя")
+                || roomType.equalsIgnoreCase("Синя кімната")
+                || roomType.equalsIgnoreCase("Синя квартира")) {
+            return "blue";
+        }
+
+        if (roomType.equalsIgnoreCase("pink")
+                || roomType.equalsIgnoreCase("Рожева")
+                || roomType.equalsIgnoreCase("Рожева кімната")
+                || roomType.equalsIgnoreCase("Рожева квартира")) {
+            return "pink";
+        }
+
+        if (roomType.equalsIgnoreCase("peach")
+                || roomType.equalsIgnoreCase("Персикова")
+                || roomType.equalsIgnoreCase("Персикова кімната")
+                || roomType.equalsIgnoreCase("Персикова квартира")) {
+            return "peach";
+        }
+
+        return "blue";
+    }
+
+    public String getBackgroundByApartmentType(String type) {
+        String normalized = normalizeRoomType(type);
+
+        if ("pink".equals(normalized)) {
+            return "src/main/resources/apartment_pink.jpg";
+        }
+
+        if ("peach".equals(normalized)) {
+            return "src/main/resources/komnata.jpg";
+        }
+
+        return "src/main/resources/apartment_blue.jpg";
     }
 
     public boolean canTakeDailyReward() {
@@ -470,44 +769,26 @@ public class GameState implements Serializable {
 
         if (selectedApartment == null || selectedApartment.isEmpty()) return "blue";
 
-        if (selectedApartment.equalsIgnoreCase("blue")
-                || selectedApartment.equalsIgnoreCase("Синя квартира")
-                || selectedApartment.equalsIgnoreCase("blue_apartment")) {
-            return "blue";
-        }
-
-        if (selectedApartment.equalsIgnoreCase("pink")
-                || selectedApartment.equalsIgnoreCase("Рожева квартира")
-                || selectedApartment.equalsIgnoreCase("pink_apartment")) {
-            return "pink";
-        }
-
-        if (selectedApartment.equalsIgnoreCase("peach")
-                || selectedApartment.equalsIgnoreCase("Персикова квартира")
-                || selectedApartment.equalsIgnoreCase("peach_apartment")) {
-            return "peach";
-        }
-
-        return "blue";
+        return normalizeRoomType(selectedApartment);
     }
 
     public void setApartmentType(String apartmentType) {
-        if (apartmentType == null || apartmentType.isEmpty()) {
-            selectedApartment = "blue";
-        } else if (apartmentType.equalsIgnoreCase("blue")
-                || apartmentType.equalsIgnoreCase("Синя квартира")
-                || apartmentType.equalsIgnoreCase("blue_apartment")) {
-            selectedApartment = "blue";
-        } else if (apartmentType.equalsIgnoreCase("pink")
-                || apartmentType.equalsIgnoreCase("Рожева квартира")
-                || apartmentType.equalsIgnoreCase("pink_apartment")) {
-            selectedApartment = "pink";
-        } else if (apartmentType.equalsIgnoreCase("peach")
-                || apartmentType.equalsIgnoreCase("Персикова квартира")
-                || apartmentType.equalsIgnoreCase("peach_apartment")) {
-            selectedApartment = "peach";
-        } else {
-            selectedApartment = apartmentType;
+        selectedApartment = normalizeRoomType(apartmentType);
+
+        Room mainRoom = null;
+
+        if (rooms != null) {
+            for (Room room : rooms) {
+                if (room != null && "main".equals(room.getId())) {
+                    mainRoom = room;
+                    break;
+                }
+            }
+        }
+
+        if (mainRoom != null) {
+            mainRoom.setType(selectedApartment);
+            mainRoom.setBackgroundImage(getBackgroundByApartmentType(selectedApartment));
         }
 
         SaveManager.saveGame(this);
@@ -557,6 +838,13 @@ public class GameState implements Serializable {
 
     public ArrayList<Item> getPlacedItems() {
         fixAfterLoad();
+
+        Room room = getCurrentRoom();
+
+        if (room != null) {
+            return room.getPlacedItems();
+        }
+
         return placedItems;
     }
 

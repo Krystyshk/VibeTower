@@ -1,13 +1,18 @@
 package vibetower.model;
 
+import vibetower.ui.InventoryFrame;
 import vibetower.ui.RepairFrame;
 import vibetower.ui.ShopFrame;
 import vibetower.ui.TasksFrame;
+import vibetower.ui.UiStyle;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Path2D;
-import java.io.File;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
 public class HomeFrame extends JFrame {
 
@@ -15,7 +20,7 @@ public class HomeFrame extends JFrame {
 
     private JLayeredPane layeredPane;
     private JLabel backgroundLabel;
-    private String currentBackgroundPath;
+
     private double zoomScale = 1.0;
 
     private JLabel xpValueLabel;
@@ -23,15 +28,19 @@ public class HomeFrame extends JFrame {
     private JLabel silverValueLabel;
     private JLabel goldValueLabel;
     private JLabel comfortLabel;
+    private JLabel titleLabel;
+    private JLabel levelBadgeLabel;
 
     private JPanel inventoryPanel;
+
+    private final ArrayList<JComponent> buttonsToHideInRepair = new ArrayList<>();
+    private final ArrayList<JComponent> renderedRoomItems = new ArrayList<>();
 
     private static final int WINDOW_WIDTH = 1200;
     private static final int WINDOW_HEIGHT = 720;
 
     public HomeFrame(GameState gameState) {
         this.gameState = gameState;
-        this.gameState.fixAfterLoad();
 
         setTitle("VibeTower — Квартира");
         setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -48,6 +57,7 @@ public class HomeFrame extends JFrame {
         layeredPane.add(backgroundLabel, Integer.valueOf(0));
 
         addTopInfo();
+        renderSavedRoomItems();
         addLeftButtons();
         addRightButtons();
         addBottomButtons();
@@ -56,640 +66,790 @@ public class HomeFrame extends JFrame {
     }
 
     private JLabel createApartmentBackground() {
-        String apartmentType = gameState.getApartmentType();
+        JLabel label = new JLabel();
 
-        if (apartmentType.equalsIgnoreCase("pink")) {
-            currentBackgroundPath = "src/main/resources/apartment_pink.jpg";
-        } else if (apartmentType.equalsIgnoreCase("peach")) {
-            currentBackgroundPath = "src/main/resources/komnata.jpg";
+        String backgroundPath = gameState.getCurrentRoomBackgroundImage();
+
+        ImageIcon icon = loadBackgroundIcon(backgroundPath, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+        if (icon != null) {
+            label.setIcon(icon);
         } else {
-            currentBackgroundPath = "src/main/resources/apartment_blue.jpg";
+            icon = loadBackgroundIcon("src/main/resources/apartment_blue.jpg", WINDOW_WIDTH, WINDOW_HEIGHT);
+
+            if (icon != null) {
+                label.setIcon(icon);
+            } else {
+                label.setOpaque(true);
+                label.setBackground(new Color(230, 220, 210));
+            }
         }
 
-        ImageIcon icon = new ImageIcon(currentBackgroundPath);
-
-        if (icon.getIconWidth() > 0) {
-            Image scaledImage = icon.getImage().getScaledInstance(
-                    WINDOW_WIDTH,
-                    WINDOW_HEIGHT,
-                    Image.SCALE_SMOOTH
-            );
-            return new JLabel(new ImageIcon(scaledImage));
-        }
-
-        JLabel fallback = new JLabel("Квартира", SwingConstants.CENTER);
-        fallback.setOpaque(true);
-        fallback.setBackground(new Color(235, 225, 215));
-        fallback.setFont(new Font("Arial", Font.BOLD, 54));
-        fallback.setForeground(Color.WHITE);
-        return fallback;
+        return label;
     }
 
-    private void updateBackgroundZoom() {
-        ImageIcon icon = new ImageIcon(currentBackgroundPath);
+    private ImageIcon loadBackgroundIcon(String path, int width, int height) {
+        try {
+            if (path == null || path.trim().isEmpty()) return null;
 
-        if (icon.getIconWidth() <= 0) {
-            return;
-        }
+            ImageIcon original = null;
+            java.io.File file = new java.io.File(path);
 
-        int newWidth = (int) (WINDOW_WIDTH * zoomScale);
-        int newHeight = (int) (WINDOW_HEIGHT * zoomScale);
+            if (file.exists()) {
+                original = new ImageIcon(path);
+            } else {
+                String cleanPath = path.replace("src/main/resources/", "");
+                java.net.URL url = getClass().getClassLoader().getResource(cleanPath);
 
-        Image scaledImage = icon.getImage().getScaledInstance(
-                newWidth,
-                newHeight,
-                Image.SCALE_SMOOTH
-        );
+                if (url != null) {
+                    original = new ImageIcon(url);
+                }
+            }
 
-        backgroundLabel.setIcon(new ImageIcon(scaledImage));
+            if (original == null || original.getIconWidth() <= 0 || original.getIconHeight() <= 0) {
+                return null;
+            }
 
-        int x = (WINDOW_WIDTH - newWidth) / 2;
-        int y = (WINDOW_HEIGHT - newHeight) / 2;
+            Image image = original.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            return new ImageIcon(image);
 
-        backgroundLabel.setBounds(x, y, newWidth, newHeight);
-        backgroundLabel.revalidate();
-        backgroundLabel.repaint();
-    }
-
-    private void zoomInRoom() {
-        if (zoomScale < 1.25) {
-            zoomScale += 0.05;
-            updateBackgroundZoom();
-        }
-    }
-
-    private void zoomOutRoom() {
-        if (zoomScale > 0.90) {
-            zoomScale -= 0.05;
-            updateBackgroundZoom();
+        } catch (Exception e) {
+            return null;
         }
     }
 
     private void addTopInfo() {
         JPanel topPanel = new JPanel(null);
-        topPanel.setBounds(0, 0, WINDOW_WIDTH, 80);
         topPanel.setOpaque(false);
-        layeredPane.add(topPanel, Integer.valueOf(5));
+        topPanel.setBounds(0, 0, WINDOW_WIDTH, 95);
 
-        JLabel crownIcon = createIconLabel(70, 58, "src/main/resources/crown.png");
-        crownIcon.setBounds(20, 10, 70, 58);
-        topPanel.add(crownIcon);
+        JLabel crown = new JLabel();
+        ImageIcon crownIcon = loadButtonIcon("src/main/resources/crown.png", 60, 60);
 
-        JLabel titleLabel = new JLabel("Твоя квартира");
-        titleLabel.setBounds(95, 13, 240, 24);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        if (crownIcon != null) {
+            crown.setIcon(crownIcon);
+        } else {
+            crown.setText("👑");
+            crown.setFont(new Font("Arial", Font.BOLD, 38));
+        }
+
+        crown.setBounds(28, 20, 70, 60);
+        topPanel.add(crown);
+
+        titleLabel = new JLabel("Твоя квартира");
         titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(UiStyle.titleFont(25));
+        titleLabel.setBounds(95, 18, 330, 35);
         topPanel.add(titleLabel);
 
         comfortLabel = new JLabel("Комфорт: 0 ⭐");
-        comfortLabel.setBounds(95, 38, 220, 24);
-        comfortLabel.setFont(new Font("Arial", Font.BOLD, 18));
         comfortLabel.setForeground(Color.WHITE);
+        comfortLabel.setFont(UiStyle.titleFont(20));
+        comfortLabel.setBounds(95, 52, 320, 32);
         topPanel.add(comfortLabel);
 
-        DiamondBadge levelBadge = new DiamondBadge(String.valueOf(gameState.getLevel()));
-        levelBadge.setBounds(640, 9, 48, 48);
-        topPanel.add(levelBadge);
+        levelBadgeLabel = new DiamondLevelLabel("1");
+        levelBadgeLabel.setBounds(585, 16, 58, 58);
+        topPanel.add(levelBadgeLabel);
 
-        JLabel starIcon = createTextIcon("⭐");
-        starIcon.setBounds(700, 17, 26, 26);
-        topPanel.add(starIcon);
+        JLabel xpIcon = new JLabel("⭐");
+        xpIcon.setFont(new Font("Arial", Font.BOLD, 26));
+        xpIcon.setBounds(660, 28, 35, 35);
+        topPanel.add(xpIcon);
 
-        JLabel xpText = new JLabel("XP");
-        xpText.setBounds(730, 15, 35, 28);
-        xpText.setFont(new Font("Arial", Font.BOLD, 19));
-        xpText.setForeground(new Color(45, 35, 120));
-        topPanel.add(xpText);
-
-        xpValueLabel = createTopValueLabel();
-        xpValueLabel.setFont(new Font("Arial", Font.BOLD, 19));
-        xpValueLabel.setBounds(768, 15, 100, 28);
+        xpValueLabel = new JLabel("XP 0/100");
+        xpValueLabel.setForeground(UiStyle.BLUE);
+        xpValueLabel.setFont(UiStyle.titleFont(22));
+        xpValueLabel.setBounds(695, 28, 170, 35);
         topPanel.add(xpValueLabel);
 
-        JLabel energyIcon = createTextIcon("⚡");
-        energyIcon.setBounds(875, 17, 26, 26);
+        JLabel energyIcon = new JLabel("⚡");
+        energyIcon.setFont(new Font("Arial", Font.BOLD, 24));
+        energyIcon.setBounds(860, 28, 35, 35);
         topPanel.add(energyIcon);
 
-        energyValueLabel = createTopValueLabel();
-        energyValueLabel.setFont(new Font("Arial", Font.BOLD, 19));
-        energyValueLabel.setBounds(905, 15, 55, 28);
+        energyValueLabel = new JLabel("100");
+        energyValueLabel.setForeground(UiStyle.BLUE);
+        energyValueLabel.setFont(UiStyle.titleFont(22));
+        energyValueLabel.setBounds(895, 28, 80, 35);
         topPanel.add(energyValueLabel);
 
-        JLabel silverIcon = createIconLabel(28, 28, "src/main/resources/serebro.png");
-        silverIcon.setBounds(975, 15, 28, 28);
+        JLabel silverIcon = new JLabel();
+        ImageIcon silver = loadButtonIcon("src/main/resources/serebro.png", 30, 30);
+
+        if (silver != null) {
+            silverIcon.setIcon(silver);
+        } else {
+            silverIcon.setText("⚪");
+            silverIcon.setFont(new Font("Arial", Font.BOLD, 21));
+        }
+
+        silverIcon.setBounds(980, 28, 35, 35);
         topPanel.add(silverIcon);
 
-        silverValueLabel = createTopValueLabel();
-        silverValueLabel.setFont(new Font("Arial", Font.BOLD, 19));
-        silverValueLabel.setBounds(1010, 15, 70, 28);
+        silverValueLabel = new JLabel("500");
+        silverValueLabel.setForeground(UiStyle.BLUE);
+        silverValueLabel.setFont(UiStyle.titleFont(22));
+        silverValueLabel.setBounds(1015, 28, 85, 35);
         topPanel.add(silverValueLabel);
 
-        JLabel goldIcon = createIconLabel(28, 28, "src/main/resources/zoloto.png");
-        goldIcon.setBounds(1090, 15, 28, 28);
+        JLabel goldIcon = new JLabel();
+        ImageIcon gold = loadButtonIcon("src/main/resources/zoloto.png", 30, 30);
+
+        if (gold != null) {
+            goldIcon.setIcon(gold);
+        } else {
+            goldIcon.setText("🟡");
+            goldIcon.setFont(new Font("Arial", Font.BOLD, 21));
+        }
+
+        goldIcon.setBounds(1100, 28, 35, 35);
         topPanel.add(goldIcon);
 
-        goldValueLabel = createTopValueLabel();
-        goldValueLabel.setFont(new Font("Arial", Font.BOLD, 19));
-        goldValueLabel.setBounds(1125, 15, 55, 28);
+        goldValueLabel = new JLabel("20");
+        goldValueLabel.setForeground(UiStyle.BLUE);
+        goldValueLabel.setFont(UiStyle.titleFont(22));
+        goldValueLabel.setBounds(1135, 28, 60, 35);
         topPanel.add(goldValueLabel);
+
+        layeredPane.add(topPanel, Integer.valueOf(50));
+        buttonsToHideInRepair.add(topPanel);
     }
 
     private void addLeftButtons() {
-        int x = 18;
-        int startY = 255;
-        int gap = 16;
-
-        int buttonWidth = 160;
-        int buttonHeight = 88;
+        int x = 28;
 
         JButton restButton = createImageButton(
-                buttonWidth,
-                buttonHeight,
+                "src/main/resources/відпочинок.png",
                 "Відпочинок",
-                "src/main/resources/відпочинок.png"
+                x,
+                260,
+                185,
+                74
         );
-        restButton.setBounds(x, startY, buttonWidth, buttonHeight);
-        layeredPane.add(restButton, Integer.valueOf(6));
-
-        JButton mapButton = createImageButton(
-                buttonWidth,
-                buttonHeight,
-                "Карта",
-                "src/main/resources/карта.png"
-        );
-        mapButton.setBounds(x, startY + buttonHeight + gap, buttonWidth, buttonHeight);
-        layeredPane.add(mapButton, Integer.valueOf(6));
-
-        JButton tasksButton = createImageButton(
-                buttonWidth,
-                buttonHeight,
-                "Завдання",
-                "src/main/resources/завдання.png"
-        );
-        tasksButton.setBounds(x, startY + (buttonHeight + gap) * 2, buttonWidth, buttonHeight);
-        layeredPane.add(tasksButton, Integer.valueOf(6));
 
         restButton.addActionListener(e -> restPlayer());
 
-        mapButton.addActionListener(e -> {
-            new MapFrame(gameState).setVisible(true);
-            dispose();
-        });
+        JButton apartmentButton = createImageButton(
+                "src/main/resources/кнопка квартира.png",
+                "Квартира",
+                x,
+                350,
+                165,
+                66
+        );
 
-        tasksButton.addActionListener(e -> {
-            new TasksFrame(gameState).setVisible(true);
-            dispose();
-        });
+        apartmentButton.addActionListener(e -> openRoomChooser());
+
+        JButton mapButton = createImageButton(
+                "src/main/resources/карта.png",
+                "Карта",
+                x,
+                430,
+                165,
+                66
+        );
+
+        mapButton.addActionListener(e ->
+                JOptionPane.showMessageDialog(this, "Карта буде додана пізніше.")
+        );
+
+        JButton tasksButton = createImageButton(
+                "src/main/resources/завдання.png",
+                "Завдання",
+                x,
+                510,
+                165,
+                66
+        );
+
+        tasksButton.addActionListener(e -> new TasksFrame(gameState).setVisible(true));
+
+        layeredPane.add(restButton, Integer.valueOf(50));
+        layeredPane.add(apartmentButton, Integer.valueOf(50));
+        layeredPane.add(mapButton, Integer.valueOf(50));
+        layeredPane.add(tasksButton, Integer.valueOf(50));
+
+        buttonsToHideInRepair.add(restButton);
+        buttonsToHideInRepair.add(apartmentButton);
+        buttonsToHideInRepair.add(mapButton);
+        buttonsToHideInRepair.add(tasksButton);
     }
 
     private void addRightButtons() {
-        int buttonSize = 62;
-        int x = WINDOW_WIDTH - buttonSize - 14;
-        int startY = 240;
-        int gap = 10;
-
         JButton zoomPlusButton = createImageButton(
-                buttonSize,
-                buttonSize,
+                "src/main/resources/zoom_plus.png",
                 "Збільшити",
-                "src/main/resources/zoom_plus.png"
+                1130,
+                330,
+                50,
+                50
         );
-        zoomPlusButton.setBounds(x, startY, buttonSize, buttonSize);
-        layeredPane.add(zoomPlusButton, Integer.valueOf(6));
+
+        zoomPlusButton.addActionListener(e -> zoomApartment(0.1));
 
         JButton zoomMinusButton = createImageButton(
-                buttonSize,
-                buttonSize,
+                "src/main/resources/zoom_minus.png",
                 "Зменшити",
-                "src/main/resources/zoom_minus.png"
+                1130,
+                405,
+                50,
+                50
         );
-        zoomMinusButton.setBounds(x, startY + buttonSize + gap, buttonSize, buttonSize);
-        layeredPane.add(zoomMinusButton, Integer.valueOf(6));
 
-        JButton editButton = createImageButton(
-                buttonSize,
-                buttonSize,
-                "Редагувати",
-                "src/main/resources/edit_space.png"
-        );
-        editButton.setBounds(x, startY + (buttonSize + gap) * 2, buttonSize, buttonSize);
-        layeredPane.add(editButton, Integer.valueOf(6));
+        zoomMinusButton.addActionListener(e -> zoomApartment(-0.1));
 
-        zoomPlusButton.addActionListener(e -> zoomInRoom());
-        zoomMinusButton.addActionListener(e -> zoomOutRoom());
+        layeredPane.add(zoomPlusButton, Integer.valueOf(50));
+        layeredPane.add(zoomMinusButton, Integer.valueOf(50));
 
-        editButton.addActionListener(e -> openRepairFrameAndCheckTask());
+        buttonsToHideInRepair.add(zoomPlusButton);
+        buttonsToHideInRepair.add(zoomMinusButton);
     }
 
     private void addBottomButtons() {
-        RoundedPanel bottomPanel = new RoundedPanel(22, new Color(125, 95, 65, 150));
-        bottomPanel.setLayout(null);
-
-        bottomPanel.setBounds(270, 595, 660, 80);
+        JPanel bottomPanel = new JPanel(new GridLayout(1, 3, 28, 0));
         bottomPanel.setOpaque(false);
-        layeredPane.add(bottomPanel, Integer.valueOf(5));
-
-        int buttonWidth = 200;
-        int buttonHeight = 66;
-        int gap = 18;
-        int y = 7;
+        bottomPanel.setBounds(260, 600, 680, 95);
 
         JButton shopButton = createImageButton(
-                buttonWidth,
-                buttonHeight,
+                "src/main/resources/магазин інтер.png",
                 "Магазин",
-                "src/main/resources/магазин інтер.png"
+                0,
+                0,
+                205,
+                85
         );
-        shopButton.setBounds(15, y, buttonWidth, buttonHeight);
-        bottomPanel.add(shopButton);
-
-        JButton inventoryButton = createImageButton(
-                buttonWidth,
-                buttonHeight,
-                "Інвентар",
-                "src/main/resources/інвентар.png"
-        );
-        inventoryButton.setBounds(15 + buttonWidth + gap, y, buttonWidth, buttonHeight);
-        bottomPanel.add(inventoryButton);
-
-        JButton repairButton = createImageButton(
-                buttonWidth,
-                buttonHeight,
-                "Режим ремонту",
-                "src/main/resources/режим ремонту.png"
-        );
-        repairButton.setBounds(15 + (buttonWidth + gap) * 2, y, buttonWidth, buttonHeight);
-        bottomPanel.add(repairButton);
 
         shopButton.addActionListener(e -> {
-            new ShopFrame(gameState).setVisible(true);
-            dispose();
+            ShopFrame shopFrame = new ShopFrame(gameState);
+            shopFrame.setVisible(true);
+            updateTopInfo();
         });
 
-        inventoryButton.addActionListener(e -> showInventoryPanel());
+        JButton inventoryButton = createImageButton(
+                "src/main/resources/інвентар.png",
+                "Інвентар",
+                0,
+                0,
+                205,
+                85
+        );
+
+        inventoryButton.addActionListener(e -> openInventoryPanel());
+
+        JButton repairButton = createImageButton(
+                "src/main/resources/режим ремонту.png",
+                "Режим ремонту",
+                0,
+                0,
+                205,
+                85
+        );
 
         repairButton.addActionListener(e -> openRepairFrameAndCheckTask());
+
+        bottomPanel.add(shopButton);
+        bottomPanel.add(inventoryButton);
+        bottomPanel.add(repairButton);
+
+        layeredPane.add(bottomPanel, Integer.valueOf(50));
+        buttonsToHideInRepair.add(bottomPanel);
     }
 
-    private void openRepairFrameAndCheckTask() {
-        checkTaskCompletion("start_repair");
+    private JButton createImageButton(String imagePath, String text, int x, int y, int width, int height) {
+        JButton button = new JButton();
 
-        new RepairFrame(gameState).setVisible(true);
-        dispose();
-    }
-
-    private void showInventoryPanel() {
-        if (inventoryPanel != null) {
-            layeredPane.remove(inventoryPanel);
-            inventoryPanel = null;
-            layeredPane.repaint();
-            return;
-        }
-
-        inventoryPanel = new JPanel(null);
-        inventoryPanel.setBounds(250, 120, 700, 430);
-        inventoryPanel.setBackground(new Color(252, 248, 240));
-        inventoryPanel.setBorder(BorderFactory.createLineBorder(new Color(120, 82, 160), 4));
-
-        JLabel title = new JLabel("Інвентар", SwingConstants.CENTER);
-        title.setBounds(0, 15, 700, 40);
-        title.setFont(new Font("Arial", Font.BOLD, 30));
-        title.setForeground(new Color(72, 37, 120));
-        inventoryPanel.add(title);
-
-        JButton closeButton = createFallbackButton("X");
-        closeButton.setBounds(640, 15, 45, 35);
-        inventoryPanel.add(closeButton);
-
-        closeButton.addActionListener(e -> {
-            layeredPane.remove(inventoryPanel);
-            inventoryPanel = null;
-            layeredPane.repaint();
-        });
-
-        JPanel itemsPanel = new JPanel(new GridLayout(0, 3, 12, 12));
-        itemsPanel.setBackground(new Color(252, 248, 240));
-
-        JScrollPane scrollPane = new JScrollPane(itemsPanel);
-        scrollPane.setBounds(25, 75, 650, 330);
-        scrollPane.setBorder(null);
-        scrollPane.getViewport().setBackground(new Color(252, 248, 240));
-        inventoryPanel.add(scrollPane);
-
-        if (gameState.getInventory().isEmpty()) {
-            JLabel empty = new JLabel("Інвентар порожній", SwingConstants.CENTER);
-            empty.setFont(new Font("Arial", Font.BOLD, 22));
-            empty.setForeground(new Color(120, 82, 160));
-            itemsPanel.add(empty);
-        } else {
-            for (Item item : gameState.getInventory()) {
-                itemsPanel.add(createInventoryCard(item));
-            }
-        }
-
-        layeredPane.add(inventoryPanel, Integer.valueOf(10));
-        layeredPane.revalidate();
-        layeredPane.repaint();
-    }
-
-    private JPanel createInventoryCard(Item item) {
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createLineBorder(new Color(120, 82, 160), 2));
-
-        JLabel icon = new JLabel(item.getIcon(), SwingConstants.CENTER);
-        icon.setFont(new Font("Arial", Font.BOLD, 36));
-        card.add(icon, BorderLayout.CENTER);
-
-        JLabel name = new JLabel(item.getName(), SwingConstants.CENTER);
-        name.setFont(new Font("Arial", Font.BOLD, 14));
-        name.setForeground(new Color(72, 37, 120));
-        card.add(name, BorderLayout.NORTH);
-
-        JButton placeButton = createFallbackButton("Поставити");
-        placeButton.setFont(new Font("Arial", Font.BOLD, 12));
-
-        placeButton.addActionListener(e -> {
-            gameState.placeItem(item);
-            SaveManager.saveGame(gameState);
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    item.getName() + " додано у кімнату.\nЩоб переміщувати предмет, відкрий режим ремонту.",
-                    "Інвентар",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-
-            checkTaskCompletion("place_item");
-            updateTopInfo();
-        });
-
-        card.add(placeButton, BorderLayout.SOUTH);
-
-        return card;
-    }
-
-    private void checkTaskCompletion(String taskId) {
-        Task task = null;
-
-        if ("clean_apartment".equals(taskId)) {
-            task = new Task(
-                    "clean_apartment",
-                    "Прибрати квартиру",
-                    "Прибирання квартири завершено.",
-                    1,
-                    0,
-                    20,
-                    50,
-                    0
-            );
-        } else if ("rest_home".equals(taskId)) {
-            task = new Task(
-                    "rest_home",
-                    "Відновити енергію вдома",
-                    "Відпочинок завершено.",
-                    1,
-                    0,
-                    30,
-                    30,
-                    0
-            );
-        } else if ("start_repair".equals(taskId)) {
-            task = new Task(
-                    "start_repair",
-                    "Увійти в режим ремонту",
-                    "Режим ремонту відкрито.",
-                    3,
-                    5,
-                    80,
-                    80,
-                    0
-            );
-        } else if ("place_item".equals(taskId)) {
-            task = new Task(
-                    "place_item",
-                    "Поставити предмет у кімнату",
-                    "Предмет поставлено у кімнату.",
-                    4,
-                    5,
-                    120,
-                    120,
-                    0
-            );
-        }
-
-        if (task == null) {
-            return;
-        }
-
-        String result = gameState.finishActiveTask(task);
-
-        if (result != null && !result.isEmpty()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    result,
-                    "Нагорода",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-
-            updateTopInfo();
-        }
-    }
-
-    private JButton createImageButton(int width, int height, String fallbackText, String... imagePaths) {
-        ImageIcon icon = findIcon(imagePaths);
-        JButton button;
-
-        if (icon != null && icon.getIconWidth() > 0) {
-            Image scaledImage = scaleImageKeepProportion(icon.getImage(), width, height);
-            button = new JButton(new ImageIcon(scaledImage));
-        } else {
-            button = createFallbackButton(fallbackText);
-        }
-
-        button.setPreferredSize(new Dimension(width, height));
-        button.setMinimumSize(new Dimension(width, height));
-        button.setMaximumSize(new Dimension(width, height));
-
-        button.setFocusPainted(false);
+        button.setBounds(x, y, width, height);
         button.setContentAreaFilled(false);
         button.setBorderPainted(false);
+        button.setFocusPainted(false);
         button.setOpaque(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setToolTipText(text);
+
+        ImageIcon icon = loadButtonIcon(imagePath, width, height);
+
+        if (icon != null) {
+            button.setIcon(icon);
+        } else {
+            button.setText(text);
+            button.setForeground(UiStyle.BLUE);
+            button.setFont(UiStyle.titleFont(14));
+            button.setBackground(UiStyle.CREAM);
+            button.setOpaque(true);
+            button.setBorder(BorderFactory.createLineBorder(UiStyle.PURPLE, 2));
+        }
 
         return button;
     }
 
-    private Image scaleImageKeepProportion(Image image, int maxWidth, int maxHeight) {
-        int originalWidth = image.getWidth(null);
-        int originalHeight = image.getHeight(null);
+    private ImageIcon loadButtonIcon(String path, int maxWidth, int maxHeight) {
+        try {
+            if (path == null || path.trim().isEmpty()) return null;
 
-        if (originalWidth <= 0 || originalHeight <= 0) {
-            return image.getScaledInstance(maxWidth, maxHeight, Image.SCALE_SMOOTH);
-        }
-
-        double widthRatio = (double) maxWidth / originalWidth;
-        double heightRatio = (double) maxHeight / originalHeight;
-        double ratio = Math.min(widthRatio, heightRatio);
-
-        int newWidth = (int) (originalWidth * ratio);
-        int newHeight = (int) (originalHeight * ratio);
-
-        return image.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-    }
-
-    private ImageIcon findIcon(String... imagePaths) {
-        for (String path : imagePaths) {
-            File file = new File(path);
+            ImageIcon original = null;
+            java.io.File file = new java.io.File(path);
 
             if (file.exists()) {
-                ImageIcon icon = new ImageIcon(path);
+                original = new ImageIcon(path);
+            } else {
+                String cleanPath = path.replace("src/main/resources/", "");
+                java.net.URL url = getClass().getClassLoader().getResource(cleanPath);
 
-                if (icon.getIconWidth() > 0) {
-                    return icon;
+                if (url != null) {
+                    original = new ImageIcon(url);
                 }
+            }
+
+            if (original == null || original.getIconWidth() <= 0 || original.getIconHeight() <= 0) {
+                return null;
+            }
+
+            int originalWidth = original.getIconWidth();
+            int originalHeight = original.getIconHeight();
+
+            double scale = Math.min(
+                    (double) maxWidth / originalWidth,
+                    (double) maxHeight / originalHeight
+            );
+
+            int newWidth = (int) Math.round(originalWidth * scale);
+            int newHeight = (int) Math.round(originalHeight * scale);
+
+            Image image = original.getImage().getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+
+            return new ImageIcon(image);
+
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void renderSavedRoomItems() {
+        clearRenderedRoomItems();
+
+        ArrayList<PlacedRoomItem> items = gameState.getCurrentRoomPlacedRoomItems();
+
+        for (PlacedRoomItem placed : items) {
+            if (placed == null || placed.getItem() == null) continue;
+
+            JButton itemButton = createPlacedItemButton(placed);
+            itemButton.setBounds(
+                    placed.getX(),
+                    placed.getY(),
+                    Math.max(30, placed.getWidth()),
+                    Math.max(30, placed.getHeight())
+            );
+
+            renderedRoomItems.add(itemButton);
+            layeredPane.add(itemButton, Integer.valueOf(20));
+        }
+
+        layeredPane.repaint();
+    }
+
+    private JButton createPlacedItemButton(PlacedRoomItem placed) {
+        Item item = placed.getItem();
+
+        JButton button = new JButton();
+        button.setName("SAVED_ROOM_ITEM");
+        button.setContentAreaFilled(false);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setOpaque(false);
+        button.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+
+        int imageWidth = Math.max(30, placed.getWidth() - 80);
+        int imageHeight = Math.max(30, placed.getHeight() - 50);
+
+        ImageIcon icon = loadObjectIcon(item, imageWidth, imageHeight);
+
+        if (icon != null) {
+            if (placed.isMirrored()) {
+                icon = mirrorIcon(icon);
+            }
+
+            button.setIcon(icon);
+            button.setText("");
+        } else {
+            if (item != null && item.getIcon() != null) {
+                button.setText(item.getIcon());
+            } else {
+                button.setText("?");
+            }
+
+            button.setFont(new Font("Arial", Font.BOLD, 36));
+        }
+
+        return button;
+    }
+
+    private ImageIcon loadObjectIcon(Item item, int maxWidth, int maxHeight) {
+        if (item == null) return null;
+
+        String path = item.getImageFile();
+
+        ImageIcon icon = loadButtonIcon(path, maxWidth, maxHeight);
+
+        if (icon != null) return icon;
+
+        if (path != null) {
+            String fileName = path.replace("\\", "/");
+
+            if (fileName.contains("/")) {
+                fileName = fileName.substring(fileName.lastIndexOf("/") + 1);
+            }
+
+            icon = loadButtonIcon("src/main/resources/" + fileName, maxWidth, maxHeight);
+
+            if (icon != null) return icon;
+
+            icon = loadButtonIcon(fileName, maxWidth, maxHeight);
+
+            if (icon != null) return icon;
+        }
+
+        return null;
+    }
+
+    private void clearRenderedRoomItems() {
+        for (JComponent component : renderedRoomItems) {
+            layeredPane.remove(component);
+        }
+
+        renderedRoomItems.clear();
+        layeredPane.repaint();
+    }
+
+    public void prepareRoomItemsForRepair() {
+        clearRenderedRoomItems();
+    }
+
+    public void reloadRoomItemsAfterRepair() {
+        renderSavedRoomItems();
+        updateTopInfo();
+    }
+
+    private void openRoomChooser() {
+        ArrayList<Room> rooms = getAvailableRoomsForChooser();
+
+        if (rooms == null || rooms.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "У тебе поки немає кімнат.");
+            return;
+        }
+
+        JDialog dialog = new JDialog(this, "Квартира", true);
+        dialog.setSize(430, 430);
+        dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
+
+        JPanel root = new JPanel(new BorderLayout(10, 10));
+        root.setBackground(UiStyle.CREAM);
+        root.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+
+        JLabel title = new JLabel("Обери кімнату", SwingConstants.CENTER);
+        title.setForeground(UiStyle.BLUE);
+        title.setFont(UiStyle.titleFont(26));
+
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+        listPanel.setBackground(UiStyle.CREAM);
+
+        for (Room room : rooms) {
+            if (room == null) continue;
+
+            JButton roomButton = UiStyle.button(getRoomButtonText(room));
+            roomButton.setFont(UiStyle.titleFont(18));
+            roomButton.setMaximumSize(new Dimension(360, 48));
+            roomButton.setPreferredSize(new Dimension(360, 48));
+            roomButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            roomButton.addActionListener(e -> {
+                gameState.setCurrentRoomId(room.getId());
+                SaveManager.saveGame(gameState);
+
+                dialog.dispose();
+                dispose();
+
+                new HomeFrame(gameState).setVisible(true);
+            });
+
+            listPanel.add(roomButton);
+            listPanel.add(Box.createVerticalStrut(10));
+        }
+
+        JScrollPane scroll = new JScrollPane(listPanel);
+        scroll.setBorder(BorderFactory.createLineBorder(UiStyle.PURPLE, 2));
+        scroll.getViewport().setBackground(UiStyle.CREAM);
+
+        JButton closeButton = UiStyle.button("Закрити");
+        closeButton.setFont(UiStyle.textFont(16));
+        closeButton.addActionListener(e -> dialog.dispose());
+
+        root.add(title, BorderLayout.NORTH);
+        root.add(scroll, BorderLayout.CENTER);
+        root.add(closeButton, BorderLayout.SOUTH);
+
+        dialog.setContentPane(root);
+        dialog.setVisible(true);
+    }
+
+    private ArrayList<Room> getAvailableRoomsForChooser() {
+        ArrayList<Room> result = new ArrayList<>();
+        ArrayList<String> usedRoomIds = new ArrayList<>();
+
+        ArrayList<Room> allRooms = gameState.getRooms();
+
+        if (allRooms == null) {
+            return result;
+        }
+
+        Room mainRoom = null;
+
+        for (Room room : allRooms) {
+            if (room != null && "main".equals(room.getId())) {
+                mainRoom = room;
+                break;
+            }
+        }
+
+        if (mainRoom != null) {
+            result.add(mainRoom);
+            usedRoomIds.add(mainRoom.getId());
+        }
+
+        for (Room room : allRooms) {
+            if (room == null) continue;
+
+            ArrayList<PlacedRoomItem> placedItems = room.getPlacedRoomItems();
+
+            for (PlacedRoomItem placed : placedItems) {
+                if (placed == null) continue;
+
+                if (!placed.isDoor()) continue;
+
+                String targetId = placed.getTargetRoomId();
+
+                if (targetId == null || targetId.trim().isEmpty()) continue;
+                if (usedRoomIds.contains(targetId)) continue;
+
+                Room targetRoom = findRoomById(targetId);
+
+                if (targetRoom != null) {
+                    result.add(targetRoom);
+                    usedRoomIds.add(targetRoom.getId());
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private Room findRoomById(String roomId) {
+        if (roomId == null) return null;
+
+        ArrayList<Room> rooms = gameState.getRooms();
+
+        if (rooms == null) return null;
+
+        for (Room room : rooms) {
+            if (room == null) continue;
+
+            if (roomId.equals(room.getId())) {
+                return room;
             }
         }
 
         return null;
     }
 
-    private JButton createFallbackButton(String text) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 15));
-        button.setForeground(new Color(70, 40, 125));
-        button.setBackground(new Color(255, 230, 180));
-        button.setBorder(BorderFactory.createLineBorder(new Color(95, 65, 150), 3));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
-    }
-
-    private JLabel createIconLabel(int width, int height, String... imagePaths) {
-        ImageIcon icon = findIcon(imagePaths);
-
-        if (icon != null && icon.getIconWidth() > 0) {
-            Image scaledImage = scaleImageKeepProportion(icon.getImage(), width, height);
-            return new JLabel(new ImageIcon(scaledImage));
+    private String getRoomButtonText(Room room) {
+        if ("main".equals(room.getId())) {
+            return "🏠 Твоя квартира";
         }
 
-        return new JLabel("");
+        String name = room.getName();
+
+        if (name == null || name.trim().isEmpty()) {
+            name = "Кімната";
+        }
+
+        return "🚪 " + name;
     }
 
-    private JLabel createTextIcon(String text) {
-        JLabel label = new JLabel(text, SwingConstants.CENTER);
-        label.setFont(new Font("Arial", Font.BOLD, 20));
-        label.setForeground(new Color(75, 40, 125));
-        return label;
+    private void openInventoryPanel() {
+        if (inventoryPanel != null) {
+            layeredPane.remove(inventoryPanel);
+            inventoryPanel = null;
+            layeredPane.repaint();
+        }
+
+        InventoryFrame inventoryFrame = new InventoryFrame(gameState);
+        inventoryFrame.setVisible(true);
     }
 
-    private JLabel createTopValueLabel() {
-        JLabel label = new JLabel();
-        label.setFont(new Font("Arial", Font.BOLD, 17));
-        label.setForeground(new Color(45, 35, 120));
-        return label;
+    private void openRepairFrameAndCheckTask() {
+        setGameButtonsVisible(false);
+        prepareRoomItemsForRepair();
+
+        RepairFrame repairFrame = new RepairFrame(this, gameState);
+
+        repairFrame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                setGameButtonsVisible(true);
+                reloadRoomItemsAfterRepair();
+                updateTopInfo();
+            }
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                setGameButtonsVisible(true);
+                reloadRoomItemsAfterRepair();
+                updateTopInfo();
+            }
+        });
+
+        repairFrame.setVisible(true);
+        updateTopInfo();
     }
 
-    private void updateTopInfo() {
-        comfortLabel.setText("Комфорт: " + gameState.getComfort() + " ⭐");
-        xpValueLabel.setText(gameState.getExperience() + "/" + gameState.getExperienceToNextLevel());
-        energyValueLabel.setText(String.valueOf(gameState.getEnergy()));
-        silverValueLabel.setText(String.valueOf(gameState.getSilver()));
-        goldValueLabel.setText(String.valueOf(gameState.getGold()));
+    private void setGameButtonsVisible(boolean visible) {
+        for (JComponent component : buttonsToHideInRepair) {
+            component.setVisible(visible);
+        }
+
+        if (inventoryPanel != null) {
+            layeredPane.remove(inventoryPanel);
+            inventoryPanel = null;
+        }
+
+        layeredPane.repaint();
     }
 
     private void restPlayer() {
-        if (gameState.getEnergy() >= 100) {
-            JOptionPane.showMessageDialog(this, "Енергія вже повна!");
-            checkTaskCompletion("clean_apartment");
-            checkTaskCompletion("rest_home");
-            updateTopInfo();
-            return;
-        }
+        gameState.setEnergy(100);
 
-        gameState.restoreEnergy();
+        SaveManager.saveGame(gameState);
         updateTopInfo();
 
-        JOptionPane.showMessageDialog(this, "Ти відпочила. Енергія відновлена!");
-
-        checkTaskCompletion("clean_apartment");
-        checkTaskCompletion("rest_home");
+        JOptionPane.showMessageDialog(
+                this,
+                "Ти відпочила. Енергія відновлена!",
+                "Відпочинок",
+                JOptionPane.INFORMATION_MESSAGE
+        );
     }
 
-    private static class DiamondBadge extends JPanel {
+    private void zoomApartment(double delta) {
+        zoomScale += delta;
 
-        private final String text;
+        if (zoomScale < 0.8) {
+            zoomScale = 0.8;
+        }
 
-        DiamondBadge(String text) {
-            this.text = text;
+        if (zoomScale > 1.3) {
+            zoomScale = 1.3;
+        }
+
+        int newWidth = (int) (WINDOW_WIDTH * zoomScale);
+        int newHeight = (int) (WINDOW_HEIGHT * zoomScale);
+
+        int x = (WINDOW_WIDTH - newWidth) / 2;
+        int y = (WINDOW_HEIGHT - newHeight) / 2;
+
+        backgroundLabel.setBounds(x, y, newWidth, newHeight);
+
+        String backgroundPath = gameState.getCurrentRoomBackgroundImage();
+        ImageIcon icon = loadBackgroundIcon(backgroundPath, newWidth, newHeight);
+
+        if (icon != null) {
+            backgroundLabel.setIcon(icon);
+        }
+
+        layeredPane.repaint();
+    }
+
+    private void updateTopInfo() {
+        if (titleLabel != null) {
+            titleLabel.setText(gameState.getCurrentRoomName());
+        }
+
+        if (comfortLabel != null) {
+            comfortLabel.setText("Комфорт: " + gameState.getComfort() + " ⭐");
+        }
+
+        if (xpValueLabel != null) {
+            xpValueLabel.setText("XP " + gameState.getXp() + "/100");
+        }
+
+        if (energyValueLabel != null) {
+            energyValueLabel.setText(String.valueOf(gameState.getEnergy()));
+        }
+
+        if (silverValueLabel != null) {
+            silverValueLabel.setText(String.valueOf(gameState.getSilver()));
+        }
+
+        if (goldValueLabel != null) {
+            goldValueLabel.setText(String.valueOf(gameState.getGold()));
+        }
+
+        if (levelBadgeLabel != null) {
+            levelBadgeLabel.setText("1");
+        }
+
+        layeredPane.repaint();
+    }
+
+    private ImageIcon mirrorIcon(ImageIcon icon) {
+        int w = icon.getIconWidth();
+        int h = icon.getIconHeight();
+
+        BufferedImage mirroredImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = mirroredImage.createGraphics();
+
+        g2.drawImage(icon.getImage(), w, 0, -w, h, null);
+        g2.dispose();
+
+        return new ImageIcon(mirroredImage);
+    }
+
+    private static class DiamondLevelLabel extends JLabel {
+
+        public DiamondLevelLabel(String text) {
+            super(text, SwingConstants.CENTER);
+            setForeground(Color.WHITE);
+            setFont(new Font("Arial", Font.BOLD, 20));
             setOpaque(false);
         }
 
         @Override
         protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-
             Graphics2D g2 = (Graphics2D) g.create();
+
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             int w = getWidth();
             int h = getHeight();
 
-            Path2D diamond = new Path2D.Float();
-            diamond.moveTo(w / 2.0, 0);
-            diamond.lineTo(w, h * 0.42);
-            diamond.lineTo(w / 2.0, h);
-            diamond.lineTo(0, h * 0.42);
+            Path2D diamond = new Path2D.Double();
+            diamond.moveTo(w / 2.0, 3);
+            diamond.lineTo(w - 3, h / 2.0);
+            diamond.lineTo(w / 2.0, h - 3);
+            diamond.lineTo(3, h / 2.0);
             diamond.closePath();
 
-            GradientPaint gradient = new GradientPaint(
-                    w / 2f, 0, new Color(240, 80, 160),
-                    w / 2f, h, new Color(190, 30, 110)
-            );
-
-            g2.setPaint(gradient);
+            g2.setColor(new Color(205, 35, 145));
             g2.fill(diamond);
 
-            g2.setColor(new Color(155, 20, 90));
-            g2.setStroke(new BasicStroke(2f));
+            g2.setStroke(new BasicStroke(3));
+            g2.setColor(new Color(120, 30, 120));
             g2.draw(diamond);
 
-            g2.setFont(new Font("Arial", Font.BOLD, 18));
-            g2.setColor(Color.WHITE);
-
-            FontMetrics fm = g2.getFontMetrics();
-            int tx = (w - fm.stringWidth(text)) / 2;
-            int ty = (int) (h * 0.42) + fm.getAscent() / 2;
-
-            g2.drawString(text, tx, ty);
             g2.dispose();
-        }
-    }
 
-    private static class RoundedPanel extends JPanel {
-
-        private final int radius;
-        private final Color backgroundColor;
-
-        public RoundedPanel(int radius, Color backgroundColor) {
-            this.radius = radius;
-            this.backgroundColor = backgroundColor;
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            g2.setColor(backgroundColor);
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
-
-            g2.setColor(new Color(150, 115, 70, 150));
-            g2.setStroke(new BasicStroke(2));
-            g2.drawRoundRect(1, 1, getWidth() - 3, getHeight() - 3, radius, radius);
-
-            g2.dispose();
         }
     }
 }

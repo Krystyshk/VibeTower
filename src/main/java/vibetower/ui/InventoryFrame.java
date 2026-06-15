@@ -1,195 +1,380 @@
 package vibetower.ui;
 
 import vibetower.model.GameState;
-import vibetower.model.HomeFrame;
 import vibetower.model.Item;
+import vibetower.model.SaveManager;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
-public class InventoryFrame extends JFrame {
+public class InventoryFrame extends JDialog {
 
     private final GameState gameState;
-    private JPanel itemsPanel;
+
+    private JLabel countLabel;
+    private final JPanel itemsPanel = new ScrollableItemsPanel();
+
+    private String selectedCategory = "Усе";
+
+    private static final String[] CATEGORIES = {
+            "Усе",
+            "Дивани",
+            "Стільці",
+            "Ліжка",
+            "Шафи",
+            "Столи",
+            "Техніка",
+            "Освітлення",
+            "Декор",
+            "Рослини",
+            "Санвузол",
+            "Кухня"
+    };
+
+    public InventoryFrame(JFrame parent, GameState gameState) {
+        super(parent, "Інвентар", true);
+
+        this.gameState = gameState;
+
+        setUndecorated(true);
+        setSize(930, 580);
+        setLocationRelativeTo(parent);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+        setBackground(new Color(0, 0, 0, 0));
+
+        JPanel content = createScreen();
+        content.setOpaque(false);
+        setContentPane(content);
+
+        showItems();
+    }
 
     public InventoryFrame(GameState gameState) {
-        this.gameState = gameState;
-        this.gameState.fixAfterLoad();
+        this(null, gameState);
+    }
 
-        setTitle("VibeTower — Інвентар");
-        setSize(1000, 680);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLayout(new BorderLayout());
+    private JPanel createScreen() {
+        JPanel root = new JPanel(new GridBagLayout());
+        root.setOpaque(false);
+        root.setBackground(new Color(0, 0, 0, 0));
 
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(new Color(252, 248, 240));
+        UiStyle.RoundPanel modal = new UiStyle.RoundPanel(
+                new BorderLayout(18, 12),
+                34,
+                UiStyle.CREAM,
+                UiStyle.PURPLE,
+                3
+        );
 
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setOpaque(false);
-        topPanel.setBorder(BorderFactory.createEmptyBorder(18, 25, 10, 25));
+        modal.setPreferredSize(new Dimension(850, 520));
+        modal.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+        modal.setOpaque(false);
 
-        JButton homeButton = createSmallButton("🏠 Додому");
-        homeButton.setPreferredSize(new Dimension(150, 42));
-        homeButton.addActionListener(e -> {
-            new HomeFrame(gameState).setVisible(true);
-            dispose();
+        root.add(modal);
+
+        modal.add(createHeader(), BorderLayout.NORTH);
+        modal.add(createCategories(), BorderLayout.WEST);
+        modal.add(createCenter(), BorderLayout.CENTER);
+
+        return root;
+    }
+
+    private JPanel createHeader() {
+        JPanel header = new JPanel(new BorderLayout(10, 0));
+        header.setOpaque(true);
+        header.setBackground(UiStyle.CREAM);
+
+        countLabel = new JLabel();
+        countLabel.setForeground(UiStyle.BLUE);
+        countLabel.setFont(UiStyle.textFont(16));
+        countLabel.setPreferredSize(new Dimension(185, 50));
+
+        JLabel title = new JLabel("Інвентар", SwingConstants.CENTER);
+        title.setForeground(UiStyle.BLUE);
+        title.setFont(UiStyle.titleFont(30));
+
+        JButton home = UiStyle.button("Додому");
+        home.setPreferredSize(new Dimension(115, 45));
+        home.setFont(UiStyle.textFont(16));
+
+        home.addActionListener(e -> {
+            InventoryFrame.this.setVisible(false);
+            InventoryFrame.this.dispose();
         });
 
-        JLabel titleLabel = new JLabel("Інвентар", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 36));
-        titleLabel.setForeground(new Color(72, 37, 120));
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        rightPanel.setOpaque(true);
+        rightPanel.setBackground(UiStyle.CREAM);
+        rightPanel.setPreferredSize(new Dimension(130, 50));
+        rightPanel.add(home);
 
-        topPanel.add(homeButton, BorderLayout.WEST);
-        topPanel.add(titleLabel, BorderLayout.CENTER);
-        topPanel.add(new CurrencyPanel(gameState), BorderLayout.EAST);
+        header.add(countLabel, BorderLayout.WEST);
+        header.add(title, BorderLayout.CENTER);
+        header.add(rightPanel, BorderLayout.EAST);
 
-        mainPanel.add(topPanel, BorderLayout.NORTH);
+        return header;
+    }
 
-        JPanel tabs = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        tabs.setOpaque(false);
+    private JPanel createCategories() {
+        JPanel panel = new JPanel(new GridLayout(CATEGORIES.length, 1, 0, 8));
+        panel.setOpaque(true);
+        panel.setBackground(UiStyle.CREAM);
+        panel.setPreferredSize(new Dimension(160, 0));
 
-        String[] categories = {
-                "Усе",
-                "Дивани",
-                "Стільці",
-                "Ліжка",
-                "Шафи",
-                "Столи",
-                "Техніка",
-                "Освітлення",
-                "Декор",
-                "Рослини",
-                "Санвузол",
-                "Кухня",
-                "Їжа"
-        };
+        for (String category : CATEGORIES) {
+            JButton button = UiStyle.button(category);
+            button.setFont(UiStyle.textFont(14));
 
-        for (String category : categories) {
-            JButton button = createSmallButton(category);
-            button.addActionListener(e -> showItems(category));
-            tabs.add(button);
+            button.addActionListener(e -> {
+                selectedCategory = category;
+                showItems();
+            });
+
+            panel.add(button);
         }
 
-        mainPanel.add(tabs, BorderLayout.BEFORE_FIRST_LINE);
-
-        itemsPanel = new JPanel(new GridLayout(0, 3, 18, 18));
-        itemsPanel.setBackground(new Color(252, 248, 240));
-        itemsPanel.setBorder(BorderFactory.createEmptyBorder(25, 55, 35, 55));
-
-        JScrollPane scrollPane = new JScrollPane(itemsPanel);
-        scrollPane.setBorder(null);
-        scrollPane.getViewport().setBackground(new Color(252, 248, 240));
-
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
-
-        add(mainPanel, BorderLayout.CENTER);
-
-        showItems("Усе");
+        return panel;
     }
 
-    public InventoryFrame() {
-        this(new GameState());
+    private JPanel createCenter() {
+        JPanel center = new JPanel(new BorderLayout());
+        center.setOpaque(true);
+        center.setBackground(UiStyle.CREAM);
+
+        itemsPanel.setOpaque(true);
+        itemsPanel.setBackground(UiStyle.CREAM);
+
+        JScrollPane scroll = new JScrollPane(itemsPanel);
+        scroll.setBorder(null);
+        scroll.setOpaque(true);
+        scroll.setBackground(UiStyle.CREAM);
+        scroll.getViewport().setOpaque(true);
+        scroll.getViewport().setBackground(UiStyle.CREAM);
+
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scroll.getVerticalScrollBar().setUnitIncrement(18);
+
+        center.add(scroll, BorderLayout.CENTER);
+
+        return center;
     }
 
-    private void showItems(String category) {
+    private void showItems() {
         itemsPanel.removeAll();
 
-        ArrayList<Item> items = gameState.getInventory();
-        int shown = 0;
+        LinkedHashMap<String, InventoryGroup> groupedItems = groupInventoryItems();
 
-        for (Item item : items) {
-            if ("Усе".equals(category) || item.getCategory().equals(category)) {
-                itemsPanel.add(createItemCard(item));
-                shown++;
-            }
+        int totalCount = 0;
+
+        for (InventoryGroup group : groupedItems.values()) {
+            totalCount += group.count;
         }
 
-        if (shown == 0) {
-            JLabel emptyLabel = new JLabel("У цій категорії поки немає предметів.", SwingConstants.CENTER);
-            emptyLabel.setFont(new Font("Arial", Font.BOLD, 24));
-            emptyLabel.setForeground(new Color(120, 82, 160));
-            itemsPanel.add(emptyLabel);
+        countLabel.setText("Предметів: " + totalCount);
+
+        if (groupedItems.isEmpty()) {
+            showEmptyInventory();
+        } else {
+            itemsPanel.setLayout(new GridLayout(0, 3, 14, 14));
+
+            for (InventoryGroup group : groupedItems.values()) {
+                itemsPanel.add(createCard(group.item, group.count));
+            }
         }
 
         itemsPanel.revalidate();
         itemsPanel.repaint();
     }
 
-    private JPanel createItemCard(Item item) {
-        JPanel card = new JPanel(new BorderLayout(8, 8));
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(120, 82, 160), 3),
-                BorderFactory.createEmptyBorder(10, 10, 10, 10)
-        ));
+    private LinkedHashMap<String, InventoryGroup> groupInventoryItems() {
+        LinkedHashMap<String, InventoryGroup> groupedItems = new LinkedHashMap<>();
 
-        JLabel iconLabel = new JLabel(item.getIcon(), SwingConstants.CENTER);
-        iconLabel.setFont(new Font("Arial", Font.BOLD, 48));
-        iconLabel.setForeground(new Color(120, 82, 160));
+        ArrayList<Item> inventory = gameState.getInventory();
 
-        JLabel nameLabel = new JLabel(item.getName(), SwingConstants.CENTER);
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        nameLabel.setForeground(new Color(72, 37, 120));
+        for (Item item : inventory) {
+            if (item == null) continue;
+            if (isDoor(item)) continue;
+            if (!matchesSelectedCategory(item)) continue;
 
-        JLabel infoLabel = new JLabel(
-                "<html><center>"
-                        + item.getCategory()
-                        + "<br>Ціна: " + item.getPrice()
-                        + (item.isGoldItem() ? " золота" : " срібла")
-                        + "<br>Рівень: " + item.getRequiredLevel()
-                        + "</center></html>",
+            String key = item.getName() + "|" + item.getImageFile();
+
+            if (groupedItems.containsKey(key)) {
+                groupedItems.get(key).count++;
+            } else {
+                groupedItems.put(key, new InventoryGroup(item, 1));
+            }
+        }
+
+        return groupedItems;
+    }
+
+    private boolean matchesSelectedCategory(Item item) {
+        if (selectedCategory == null || selectedCategory.equals("Усе")) return true;
+        if (item.getCategory() == null) return false;
+
+        return item.getCategory().equals(selectedCategory);
+    }
+
+    private void showEmptyInventory() {
+        itemsPanel.setLayout(new BorderLayout());
+
+        JLabel empty = new JLabel(
+                "<html><center>У цьому розділі нічого немає<br>Купи предмети в магазині</center></html>",
                 SwingConstants.CENTER
         );
 
-        infoLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        infoLabel.setForeground(new Color(120, 82, 160));
+        empty.setForeground(UiStyle.BLUE);
+        empty.setFont(UiStyle.textFont(22));
 
-        JButton placeButton = createSmallButton("Поставити");
+        JPanel emptyPanel = new JPanel(new GridBagLayout());
+        emptyPanel.setOpaque(true);
+        emptyPanel.setBackground(UiStyle.CREAM);
+        emptyPanel.add(empty);
 
-        placeButton.addActionListener(e -> {
-            if ("Їжа".equals(item.getCategory())) {
-                gameState.addEnergy(20);
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Енергію відновлено на 20.",
-                        "Інвентар",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-            } else {
-                gameState.placeItem(item);
-                JOptionPane.showMessageDialog(
-                        this,
-                        item.getName()
-                                + " додано у кімнату.\n\n"
-                                + "Відкрий режим ремонту, щоб перемістити предмет.",
-                        "Інвентар",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-            }
-        });
+        itemsPanel.add(emptyPanel, BorderLayout.CENTER);
+    }
 
-        JPanel top = new JPanel(new GridLayout(2, 1));
-        top.setOpaque(false);
-        top.add(nameLabel);
-        top.add(infoLabel);
+    private JPanel createCard(Item item, int count) {
+        UiStyle.RoundPanel card = new UiStyle.RoundPanel(
+                new BorderLayout(6, 6),
+                20,
+                new Color(255, 252, 247),
+                UiStyle.PURPLE,
+                2
+        );
 
-        card.add(top, BorderLayout.NORTH);
-        card.add(iconLabel, BorderLayout.CENTER);
-        card.add(placeButton, BorderLayout.SOUTH);
+        card.setPreferredSize(new Dimension(185, 210));
+        card.setMinimumSize(new Dimension(185, 210));
+        card.setMaximumSize(new Dimension(185, 210));
+        card.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        card.setOpaque(false);
+
+        JLabel name = new JLabel(item.getName(), SwingConstants.CENTER);
+        name.setForeground(UiStyle.BLUE);
+        name.setFont(UiStyle.textFont(14));
+
+        JPanel imageWrap = new JPanel(new GridBagLayout());
+        imageWrap.setOpaque(true);
+        imageWrap.setBackground(new Color(255, 252, 247));
+        imageWrap.setPreferredSize(new Dimension(150, 95));
+
+        JLabel image = new JLabel("", SwingConstants.CENTER);
+        image.setHorizontalAlignment(SwingConstants.CENTER);
+        image.setVerticalAlignment(SwingConstants.CENTER);
+
+        ImageIcon icon = UiStyle.iconContain(item.getImageFile(), 130, 90);
+
+        if (icon != null) {
+            image.setIcon(icon);
+        } else {
+            image.setText("<html><center><span style='font-size:34px'>" + item.getIcon() + "</span></center></html>");
+        }
+
+        imageWrap.add(image);
+
+        JLabel category = new JLabel(item.getCategory(), SwingConstants.CENTER);
+        category.setForeground(new Color(100, 80, 130));
+        category.setFont(UiStyle.textFont(12));
+
+        JLabel amount = new JLabel("Кількість: ×" + count, SwingConstants.CENTER);
+        amount.setForeground(UiStyle.BLUE);
+        amount.setFont(UiStyle.textFont(13));
+
+        JButton place = UiStyle.button("Поставити");
+        place.setFont(UiStyle.textFont(13));
+        place.setPreferredSize(new Dimension(130, 30));
+
+        place.addActionListener(e -> placeItem(item));
+
+        JPanel bottom = new JPanel(new GridLayout(3, 1, 0, 4));
+        bottom.setOpaque(true);
+        bottom.setBackground(new Color(255, 252, 247));
+        bottom.add(category);
+        bottom.add(amount);
+        bottom.add(place);
+
+        card.add(name, BorderLayout.NORTH);
+        card.add(imageWrap, BorderLayout.CENTER);
+        card.add(bottom, BorderLayout.SOUTH);
 
         return card;
     }
 
-    private JButton createSmallButton(String text) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 14));
-        button.setBackground(new Color(255, 218, 130));
-        button.setForeground(new Color(72, 37, 120));
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createLineBorder(new Color(120, 82, 160), 2));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
+    private void placeItem(Item item) {
+        if (isDoor(item)) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Двері не можна ставити як предмет. Вони відкривають нову кімнату."
+            );
+            return;
+        }
+
+        gameState.placeItem(item);
+
+        SaveManager.saveGame(gameState);
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Предмет додано в кімнату: " + item.getName()
+        );
+
+        showItems();
+    }
+
+    private boolean isDoor(Item item) {
+        if (item == null || item.getName() == null) return false;
+
+        String name = item.getName().toLowerCase();
+
+        return name.contains("двері");
+    }
+
+    private static class InventoryGroup {
+        private final Item item;
+        private int count;
+
+        public InventoryGroup(Item item, int count) {
+            this.item = item;
+            this.count = count;
+        }
+    }
+
+    private static class ScrollableItemsPanel extends JPanel implements Scrollable {
+
+        public ScrollableItemsPanel() {
+            super(new GridLayout(0, 3, 14, 14));
+            setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+            setOpaque(true);
+            setBackground(UiStyle.CREAM);
+        }
+
+        @Override
+        public Dimension getPreferredScrollableViewportSize() {
+            return getPreferredSize();
+        }
+
+        @Override
+        public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return 18;
+        }
+
+        @Override
+        public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return 180;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return true;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportHeight() {
+            return false;
+        }
     }
 }

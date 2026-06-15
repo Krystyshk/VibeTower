@@ -38,7 +38,7 @@ public class MapFrame extends JFrame {
         setTitle("VibeTower — Карта міста");
         setSize(820, 620);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setResizable(false);
 
         // Головна панель
@@ -325,7 +325,7 @@ public class MapFrame extends JFrame {
         footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(60, 75, 100)));
 
         JButton homeBtn = makeFooterBtn("🏠  Додому", new Color(70, 90, 130));
-        homeBtn.addActionListener(e -> { new HomeFrame(gameState).setVisible(true); dispose(); });
+        homeBtn.addActionListener(e -> dispose());
         footer.add(homeBtn);
         return footer;
     }

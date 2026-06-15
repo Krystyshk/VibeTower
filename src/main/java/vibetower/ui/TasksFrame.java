@@ -1,8 +1,8 @@
 package vibetower.ui;
 
 import vibetower.model.GameState;
-import vibetower.model.HomeFrame;
 import vibetower.model.Item;
+import vibetower.model.SaveManager;
 import vibetower.model.Task;
 
 import javax.swing.*;
@@ -30,10 +30,7 @@ public class TasksFrame extends JFrame {
 
         JButton homeButton = new JButton("🏠 Додому");
         homeButton.setFont(new Font("Arial", Font.BOLD, 16));
-        homeButton.addActionListener(e -> {
-            new HomeFrame(gameState).setVisible(true);
-            dispose();
-        });
+        homeButton.addActionListener(e -> dispose());
 
         JLabel title = new JLabel(
                 "Рівень " + gameState.getLevel() + " — " + gameState.getLevelUnlockText(),
@@ -48,7 +45,7 @@ public class TasksFrame extends JFrame {
         top.add(title, BorderLayout.CENTER);
 
         xpBar = new JProgressBar(0, Math.max(1, gameState.getExperienceToNextLevel()));
-        xpBar.setValue(gameState.getExperience());
+        xpBar.setValue(Math.min(gameState.getExperience(), Math.max(1, gameState.getExperienceToNextLevel())));
         xpBar.setString(gameState.getExperience() + " / " + gameState.getExperienceToNextLevel() + " XP");
         xpBar.setStringPainted(true);
 
@@ -146,7 +143,8 @@ public class TasksFrame extends JFrame {
                         120,
                         120,
                         0,
-                        new Item("Назва", "Категорія", 120, "silver", 1, "🛋", "png/sofa.png")                ),
+                        new Item("Диван", "Декор", 120, "silver", 1, "🛋", "png/sofa.png")
+                ),
                 new Task(
                         "rest_home",
                         "Відновити енергію вдома",
@@ -222,7 +220,7 @@ public class TasksFrame extends JFrame {
             button.setText("Почати");
             button.addActionListener(e -> {
                 gameState.startTask(task.getId());
-                SaveManagerProxy.save(gameState);
+                SaveManager.saveGame(gameState);
 
                 JOptionPane.showMessageDialog(
                         this,
@@ -252,13 +250,8 @@ public class TasksFrame extends JFrame {
     }
 
     private void goToTask(Task task) {
-        new HomeFrame(gameState).setVisible(true);
+        // ВАЖНО: не создаём новое окно HomeFrame.
+        // Квартира уже открыта сзади, поэтому просто закрываем окно заданий.
         dispose();
-    }
-
-    private static class SaveManagerProxy {
-        static void save(GameState state) {
-            vibetower.model.SaveManager.saveGame(state);
-        }
     }
 }

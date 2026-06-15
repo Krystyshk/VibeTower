@@ -8,63 +8,72 @@ import java.awt.*;
 
 public class StartFrame extends JFrame {
 
-    private GameState gameState;
+    private final GameState gameState;
 
     public StartFrame(GameState gameState) {
         this.gameState = gameState;
 
-        setTitle("VibeTower — Вхід");
-        setSize(900, 600);
+        setTitle("VibeTower — Головне меню");
+        setSize(1280, 720);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setResizable(false);
 
-        JPanel mainPanel = new JPanel();
-        mainPanel.setBackground(Color.WHITE);
+        BackgroundPanel mainPanel = new BackgroundPanel("/main_menu.png");
         mainPanel.setLayout(null);
 
-        JLabel titleLabel = new JLabel("VibeTower");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 54));
-        titleLabel.setForeground(new Color(72, 37, 120));
-        titleLabel.setBounds(290, 80, 400, 70);
-        mainPanel.add(titleLabel);
+        // Прозора кнопка "Увійти"
+        JButton loginButton = createHotspotButton();
+        loginButton.setBounds(500, 300, 390, 95);
 
-        JLabel subtitleLabel = new JLabel("Ласкаво просимо у гру!");
-        subtitleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        subtitleLabel.setForeground(new Color(120, 82, 160));
-        subtitleLabel.setBounds(285, 155, 400, 40);
-        mainPanel.add(subtitleLabel);
-
-        JTextField emailField = new JTextField();
-        emailField.setBounds(300, 240, 300, 45);
-        emailField.setFont(new Font("Arial", Font.PLAIN, 18));
-        emailField.setBorder(BorderFactory.createTitledBorder("Email"));
-        mainPanel.add(emailField);
-
-        JPasswordField passwordField = new JPasswordField();
-        passwordField.setBounds(300, 305, 300, 45);
-        passwordField.setFont(new Font("Arial", Font.PLAIN, 18));
-        passwordField.setBorder(BorderFactory.createTitledBorder("Пароль"));
-        mainPanel.add(passwordField);
-
-        JButton startButton = new JButton("Увійти в гру");
-        startButton.setBounds(335, 385, 230, 55);
-        startButton.setFont(new Font("Arial", Font.BOLD, 22));
-        startButton.setBackground(new Color(255, 210, 120));
-        startButton.setForeground(new Color(72, 37, 120));
-        startButton.setFocusPainted(false);
-        mainPanel.add(startButton);
-
-        startButton.addActionListener(e -> {
-            HomeFrame homeFrame = new HomeFrame(gameState);
-            homeFrame.setVisible(true);
+        loginButton.addActionListener(e -> {
+            LoginFrame loginFrame = new LoginFrame(gameState);
+            loginFrame.setVisible(true);
             dispose();
         });
 
-        add(mainPanel, BorderLayout.CENTER);
+        // Прозора кнопка "Зареєструватися"
+        JButton registerButton = createHotspotButton();
+        registerButton.setBounds(500, 420, 390, 95);
+
+        registerButton.addActionListener(e -> {
+            CharacterCreatorFrame creatorFrame = new CharacterCreatorFrame();
+            creatorFrame.setVisible(true);
+            dispose();
+        });
+
+        mainPanel.add(loginButton);
+        mainPanel.add(registerButton);
+
+        setContentPane(mainPanel);
     }
 
     public StartFrame() {
         this(new GameState());
+    }
+
+    private JButton createHotspotButton() {
+        JButton button = new JButton();
+        button.setOpaque(false);
+        button.setContentAreaFilled(false);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return button;
+    }
+
+    static class BackgroundPanel extends JPanel {
+        private final Image backgroundImage;
+
+        public BackgroundPanel(String imagePath) {
+            ImageIcon icon = new ImageIcon(getClass().getResource(imagePath));
+            backgroundImage = icon.getImage();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+        }
     }
 }

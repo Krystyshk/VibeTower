@@ -53,7 +53,7 @@ public class ApartmentChoiceFrame extends JFrame {
         addApartmentCard(
                 mainPanel,
                 "Персикова квартира",
-                "src/main/resources/apartment_peach.jpg",
+                "src/main/resources/komnata.jpg",
                 790,
                 170,
                 "peach"
@@ -94,6 +94,7 @@ public class ApartmentChoiceFrame extends JFrame {
 
         chooseButton.addActionListener(e -> {
             gameState.setApartmentType(apartmentType);
+
             SaveManager.saveGame(gameState);
 
             HomeFrame homeFrame = new HomeFrame(gameState);
@@ -104,9 +105,9 @@ public class ApartmentChoiceFrame extends JFrame {
     }
 
     private JLabel createImageLabel(String imagePath) {
-        ImageIcon icon = new ImageIcon(imagePath);
+        ImageIcon icon = loadIcon(imagePath);
 
-        if (icon.getIconWidth() > 0) {
+        if (icon != null && icon.getIconWidth() > 0) {
             Image scaledImage = icon.getImage().getScaledInstance(300, 230, Image.SCALE_SMOOTH);
             return new JLabel(new ImageIcon(scaledImage));
         }
@@ -119,22 +120,40 @@ public class ApartmentChoiceFrame extends JFrame {
         return fallback;
     }
 
+    private ImageIcon loadIcon(String path) {
+        try {
+            java.io.File file = new java.io.File(path);
+
+            if (file.exists()) {
+                return new ImageIcon(file.getAbsolutePath());
+            }
+
+            String cleanPath = path.replace("src/main/resources/", "");
+            java.net.URL url = getClass().getClassLoader().getResource(cleanPath);
+
+            if (url != null) {
+                return new ImageIcon(url);
+            }
+
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private JButton createGameButton(String text) {
         JButton button = new JButton(text);
 
         button.setFocusPainted(false);
-        button.setContentAreaFilled(false);
-        button.setOpaque(false);
-
         button.setFont(new Font("Arial", Font.BOLD, 22));
         button.setForeground(new Color(70, 40, 125));
+        button.setBackground(new Color(255, 225, 145));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         button.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(95, 65, 150), 4),
                 BorderFactory.createEmptyBorder(8, 15, 8, 15)
         ));
-
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         return button;
     }

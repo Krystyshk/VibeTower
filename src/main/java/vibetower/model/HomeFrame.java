@@ -59,7 +59,7 @@ public class HomeFrame extends JFrame {
         addTopInfo();
         renderSavedRoomItems();
         addLeftButtons();
-        addRightButtons();
+        // addRightButtons(); // кнопки +/- убраны, чтобы не ломать масштаб предметов
         addBottomButtons();
 
         updateTopInfo();
@@ -96,7 +96,7 @@ public class HomeFrame extends JFrame {
             java.io.File file = new java.io.File(path);
 
             if (file.exists()) {
-                original = new ImageIcon(file.getAbsolutePath());
+                original = new ImageIcon(path);
             } else {
                 String cleanPath = path.replace("src/main/resources/", "");
                 java.net.URL url = getClass().getClassLoader().getResource(cleanPath);
@@ -250,9 +250,10 @@ public class HomeFrame extends JFrame {
                 66
         );
 
-        mapButton.addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Карта буде додана пізніше.")
-        );
+        mapButton.addActionListener(e -> {
+            MapFrame mapFrame = new MapFrame(gameState);
+            mapFrame.setVisible(true);
+        });
 
         JButton tasksButton = createImageButton(
                 "src/main/resources/завдання.png",
@@ -388,83 +389,13 @@ public class HomeFrame extends JFrame {
             if (path == null || path.trim().isEmpty()) return null;
 
             ImageIcon original = null;
+            java.io.File file = new java.io.File(path);
 
-            String cleanPath = path.trim();
-
-            java.io.File file = new java.io.File(cleanPath);
             if (file.exists()) {
-                original = new ImageIcon(file.getAbsolutePath());
-            }
-
-            if (original == null) {
-                file = new java.io.File("png/" + cleanPath);
-                if (file.exists()) {
-                    original = new ImageIcon(file.getAbsolutePath());
-                }
-            }
-
-            if (original == null) {
-                file = new java.io.File("src/main/resources/" + cleanPath);
-                if (file.exists()) {
-                    original = new ImageIcon(file.getAbsolutePath());
-                }
-            }
-
-            if (original == null) {
-                file = new java.io.File("src/main/resources/png/" + cleanPath);
-                if (file.exists()) {
-                    original = new ImageIcon(file.getAbsolutePath());
-                }
-            }
-
-            if (original == null) {
-                String onlyName = cleanPath.replace("\\", "/");
-
-                if (onlyName.contains("/")) {
-                    onlyName = onlyName.substring(onlyName.lastIndexOf("/") + 1);
-                }
-
-                file = new java.io.File("png/" + onlyName);
-                if (file.exists()) {
-                    original = new ImageIcon(file.getAbsolutePath());
-                }
-            }
-
-            if (original == null) {
-                String onlyName = cleanPath.replace("\\", "/");
-
-                if (onlyName.contains("/")) {
-                    onlyName = onlyName.substring(onlyName.lastIndexOf("/") + 1);
-                }
-
-                file = new java.io.File("src/main/resources/" + onlyName);
-                if (file.exists()) {
-                    original = new ImageIcon(file.getAbsolutePath());
-                }
-            }
-
-            if (original == null) {
-                String resourcePath = cleanPath.replace("src/main/resources/", "");
-
-                java.net.URL url = getClass().getClassLoader().getResource(resourcePath);
-
-                if (url == null) {
-                    url = getClass().getClassLoader().getResource("png/" + resourcePath);
-                }
-
-                if (url == null) {
-                    String onlyName = resourcePath.replace("\\", "/");
-
-                    if (onlyName.contains("/")) {
-                        onlyName = onlyName.substring(onlyName.lastIndexOf("/") + 1);
-                    }
-
-                    url = getClass().getClassLoader().getResource(onlyName);
-
-                    if (url == null) {
-                        url = getClass().getClassLoader().getResource("png/" + onlyName);
-                    }
-                }
+                original = new ImageIcon(path);
+            } else {
+                String cleanPath = path.replace("src/main/resources/", "");
+                java.net.URL url = getClass().getClassLoader().getResource(cleanPath);
 
                 if (url != null) {
                     original = new ImageIcon(url);
@@ -483,8 +414,8 @@ public class HomeFrame extends JFrame {
                     (double) maxHeight / originalHeight
             );
 
-            int newWidth = Math.max(1, (int) Math.round(originalWidth * scale));
-            int newHeight = Math.max(1, (int) Math.round(originalHeight * scale));
+            int newWidth = (int) Math.round(originalWidth * scale);
+            int newHeight = (int) Math.round(originalHeight * scale);
 
             Image image = original.getImage().getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
 
@@ -501,9 +432,7 @@ public class HomeFrame extends JFrame {
         ArrayList<PlacedRoomItem> items = gameState.getCurrentRoomPlacedRoomItems();
 
         for (PlacedRoomItem placed : items) {
-            if (placed == null) continue;
-
-            placed.fixAfterLoad();
+            if (placed == null || placed.getItem() == null) continue;
 
             JButton itemButton = createPlacedItemButton(placed);
             itemButton.setBounds(
@@ -521,7 +450,7 @@ public class HomeFrame extends JFrame {
     }
 
     private JButton createPlacedItemButton(PlacedRoomItem placed) {
-        placed.fixAfterLoad();
+        Item item = placed.getItem();
 
         JButton button = new JButton();
         button.setName("SAVED_ROOM_ITEM");
@@ -534,7 +463,7 @@ public class HomeFrame extends JFrame {
         int imageWidth = Math.max(30, placed.getWidth() - 80);
         int imageHeight = Math.max(30, placed.getHeight() - 50);
 
-        ImageIcon icon = loadObjectIcon(placed, imageWidth, imageHeight);
+        ImageIcon icon = loadObjectIcon(item, imageWidth, imageHeight);
 
         if (icon != null) {
             if (placed.isMirrored()) {
@@ -544,34 +473,26 @@ public class HomeFrame extends JFrame {
             button.setIcon(icon);
             button.setText("");
         } else {
-            button.setText(placed.getItemIcon());
+            if (item != null && item.getIcon() != null) {
+                button.setText(item.getIcon());
+            } else {
+                button.setText("?");
+            }
+
             button.setFont(new Font("Arial", Font.BOLD, 36));
         }
 
         return button;
     }
 
-    private ImageIcon loadObjectIcon(PlacedRoomItem placed, int maxWidth, int maxHeight) {
-        if (placed == null) return null;
+    private ImageIcon loadObjectIcon(Item item, int maxWidth, int maxHeight) {
+        if (item == null) return null;
 
-        placed.fixAfterLoad();
+        String path = item.getImageFile();
 
-        ImageIcon icon = loadButtonIcon(placed.getImageFile(), maxWidth, maxHeight);
+        ImageIcon icon = loadButtonIcon(path, maxWidth, maxHeight);
 
         if (icon != null) return icon;
-
-        Item item = placed.getItem();
-
-        if (item != null) {
-            icon = loadButtonIcon(item.getImageFile(), maxWidth, maxHeight);
-
-            if (icon != null) {
-                placed.setImageFile(item.getImageFile());
-                return icon;
-            }
-        }
-
-        String path = placed.getImageFile();
 
         if (path != null) {
             String fileName = path.replace("\\", "/");
@@ -580,13 +501,12 @@ public class HomeFrame extends JFrame {
                 fileName = fileName.substring(fileName.lastIndexOf("/") + 1);
             }
 
-            icon = loadButtonIcon("png/" + fileName, maxWidth, maxHeight);
-            if (icon != null) return icon;
-
             icon = loadButtonIcon("src/main/resources/" + fileName, maxWidth, maxHeight);
+
             if (icon != null) return icon;
 
             icon = loadButtonIcon(fileName, maxWidth, maxHeight);
+
             if (icon != null) return icon;
         }
 
@@ -706,8 +626,6 @@ public class HomeFrame extends JFrame {
 
             for (PlacedRoomItem placed : placedItems) {
                 if (placed == null) continue;
-
-                placed.fixAfterLoad();
 
                 if (!placed.isDoor()) continue;
 
@@ -879,7 +797,7 @@ public class HomeFrame extends JFrame {
         }
 
         if (levelBadgeLabel != null) {
-            levelBadgeLabel.setText(String.valueOf(gameState.getLevel()));
+            levelBadgeLabel.setText("1");
         }
 
         layeredPane.repaint();
